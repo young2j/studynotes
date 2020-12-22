@@ -1,0 +1,44 @@
+Win + ,				隐藏窗口，放开显示
+Win + D 			显示桌面
+Win + home 			最小化其他所有窗口
+
+Win + E 			打开文件管理器
+Alt + 向上箭头		在文件资源管理器中上升一级。
+Alt + 向左箭头		转到文件资源管理器中的上一个文件夹。
+Alt + 向右箭头		转到文件资源管理器中的下一个文件夹
+
+Win + X				开始按钮上下文菜单
+Win + S				打开搜索
+Win + A 			打开通知
+Win + I 			打开设置
+Win + L 			锁屏
+Ctrl + Alt + Del 	任务管理器菜单
+Ctrl+Shift+Esc		打开任务管理器
+
+Win + T 			循环访问任务栏，按Enter启动
+Alt+Tab 			任务切换
+Win+Tab				显示窗口视图
+Shift+Delete		删除文件而不先将它们发送到回收站
+Alt+Enter			显示所选文件的属性
+
+
+虚拟桌面
+Win + Ctrl + D  	新建虚拟桌面 
+Win + Ctrl + F4 	关闭虚拟桌面
+Win + Ctrl + -> 	转到右侧虚拟桌面
+Win + Ctrl + <- 	转到左侧虚拟桌面
+
+
+移动窗口
+Win + <-  			将当前窗口移到左侧。
+Win + ->  			将当前窗口移到右侧。
+Win + ⬆   			将当前窗口移到到顶部。
+Win + ⬇   			将当前窗口移到到底部。
+
+Ctrl和Shift
+Shift+左箭头 		选择光标左侧的文本。
+Shift+右箭头 		选择光标右侧的文本。
+Ctrl+Shift+左/右箭头 选择文本块而不是一次只选择字符。
+Ctrl+C 				复制所选文本。
+Ctrl+V 				粘贴选中的文本。
+Ctrl+A 				选中光标提示符后的所有文本。

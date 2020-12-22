@@ -1,0 +1,10 @@
+通过bufio写入的内容0
+通过bufio写入的内容1
+通过bufio写入的内容2
+通过bufio写入的内容3
+通过bufio写入的内容4
+通过bufio写入的内容5
+通过bufio写入的内容6
+通过bufio写入的内容7
+通过bufio写入的内容8
+通过bufio写入的内容9

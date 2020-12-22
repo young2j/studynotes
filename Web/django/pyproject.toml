@@ -1,0 +1,29 @@
+[tool.poetry]
+name = "demosite"
+version = "0.1.0"
+description = "officail django doc study notes."
+authors = ["ysj <173371929@qq.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.7"
+Django = "^3.1.2"
+djangorestframework = "^3.12.1"
+Pygments = "^2.7.2"
+coreapi = "^2.3.3"
+PyYAML = "^5.3.1"
+django-rest-swagger = "^2.2.0"
+django-filter = "^2.4.0"
+
+[tool.poetry.dev-dependencies]
+flake8 = "^3.8.4"
+autopep8 = "^1.5.4"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+[tool.poetry.scripts]
+dev="scripts:runserver"
+migrations="scripts:makemigrations"
+migrate="scripts:migrate"
+format="scripts:flakeformat"
+shell="scripts:shell"

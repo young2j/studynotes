@@ -1,0 +1,6 @@
+[日志前缀]2020/09/14 15:02:03 D:/programs/studynotes/Go/goSTL/go-log/main.go:22: 这是一普通日志
+[日志前缀]2020/09/14 15:02:03 D:/programs/studynotes/Go/goSTL/go-log/main.go:24: 这也是一条普通的日志
+[日志前缀]2020/09/14 15:02:03 D:/programs/studynotes/Go/goSTL/go-log/main.go:25: 这是一条Fatal日志，会调用os.Exit(1)
+[日志前缀]2020/09/14 15:03:08 D:/programs/studynotes/Go/goSTL/go-log/main.go:24: 这是一普通日志
+[日志前缀]2020/09/14 15:03:08 D:/programs/studynotes/Go/goSTL/go-log/main.go:26: 这也是一条普通的日志
+[日志前缀]2020/09/14 15:03:08 D:/programs/studynotes/Go/goSTL/go-log/main.go:27: 这是一条Fatal日志，会调用os.Exit(1)

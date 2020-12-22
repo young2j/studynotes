@@ -1,0 +1,32 @@
+[GIN-debug] [WARNING] Creating an Engine instance with the Logger and Recovery middleware already attached.
+
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+[GIN-debug] GET    /templates/*filepath      --> github.com/gin-gonic/gin.(*RouterGroup).createStaticHandler.func1 (4 handlers)
+[GIN-debug] HEAD   /templates/*filepath      --> github.com/gin-gonic/gin.(*RouterGroup).createStaticHandler.func1 (4 handlers)
+[GIN-debug] GET    /staticFs/*filepath       --> github.com/gin-gonic/gin.(*RouterGroup).createStaticHandler.func1 (4 handlers)
+[GIN-debug] HEAD   /staticFs/*filepath       --> github.com/gin-gonic/gin.(*RouterGroup).createStaticHandler.func1 (4 handlers)
+[GIN-debug] GET    /ginmd                    --> github.com/gin-gonic/gin.(*RouterGroup).StaticFile.func1 (4 handlers)
+[GIN-debug] HEAD   /ginmd                    --> github.com/gin-gonic/gin.(*RouterGroup).StaticFile.func1 (4 handlers)
+[GIN-debug] GET    /local/file/ginmd         --> main.main.func2 (4 handlers)
+[GIN-debug] GET    /fs/file/log              --> main.main.func3 (4 handlers)
+[GIN-debug] GET    /                         --> main.main.func4 (4 handlers)
+[GIN-debug] POST   /login                    --> main.main.func5 (4 handlers)
+[GIN-debug] GET    /user/:name/*action       --> main.main.func6 (4 handlers)
+[GIN-debug] GET    /user/                    --> main.main.func7 (4 handlers)
+[GIN-debug] POST   /user/                    --> main.main.func8 (4 handlers)
+[GIN-debug] POST   /post                     --> main.main.func9 (4 handlers)
+[GIN-debug] POST   /upload                   --> main.main.func10 (4 handlers)
+[GIN-debug] GET    /secureJson               --> main.main.func11 (4 handlers)
+[GIN-debug] GET    /pureJson                 --> main.main.func12 (4 handlers)
+[GIN-debug] Loaded HTML Templates (3): 
+	- index.html
+	- index.tmpl
+	- 
+
+[GIN-debug] GET    /tmpl                     --> main.main.func13 (4 handlers)
+[GIN-debug] GET    /index                    --> main.main.func14 (4 handlers)
+[GIN-debug] Listening and serving HTTP on :8080
+[GIN] 2020/12/13 - 23:24:43 | 500 |      13.003ms |             ::1 | GET      "/tmpl"

@@ -1,0 +1,16 @@
+# dependency
+venv/
+node_modules/
+dist/
+build/
+
+# ide
+.idea
+.vscode
+.ipynb_checkpoints
+
+*/.git
+*/*/.git
+
+# no track
+Python/Matplotlib【Python】/*.png
