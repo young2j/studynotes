@@ -1,0 +1,14 @@
+version: "3"
+services:
+  grafana:
+    image: grafana/grafana
+    restart: always
+    container_name: grafana
+    ports:
+      - 3044:3000
+    volumes:
+      - ../data/grafana/:/var/lib/grafana
+    # network_mode: bridge
+    environment:
+      # - GF_INSTALL_PLUGINS=grafana-clock-panel,grafana-simple-json-datasource
+      - GF_LOG_MODE=console file

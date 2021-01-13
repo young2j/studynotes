@@ -1,0 +1,47 @@
+version: "3"
+services:
+  # mysql
+  mysql:
+    image: mysql:5.7.17
+    restart: always
+    container_name: product_mysql
+    ports:
+      - 0.0.0.0:3306:3306
+    volumes:
+      - ../data/mysql:/var/lib/mysql
+    privileged: true
+    network_mode: bridge
+    environment:
+      - MYSQL_ROOT_PASSWORD=rootroot
+    command: mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+  # # mysql -u root -prootroot
+  # # drop database coconut_archive;
+  # CREATE DATABASE IF NOT EXISTS kms DEFAULT CHARSET utf8mb4 COLLATE utf8mb4_general_ci;
+  # CREATE DATABASE IF NOT EXISTS opinion DEFAULT CHARSET utf8mb4 COLLATE utf8mb4_general_ci;
+  # CREATE DATABASE IF NOT EXISTS coconut_store DEFAULT CHARSET utf8mb4 COLLATE utf8mb4_general_ci;
+  # grant all privileges on *.* to 'opt'@'%' identified by 'rootroot' with grant option;
+
+
+  redis:
+    network_mode: bridge
+    container_name: redis
+    image: redis:latest
+    ports:
+      - "6381:6379"
+    restart: always
+    command: redis-server
+    # command: redis-server --requirepass Ksredis_1
+  # # redis
+
+  mongo:
+    network_mode: bridge
+    container_name: mongo
+    image: mongo:latest
+    ports:
+      - "27017:27017"
+    restart: always
+    # environment:
+    #   MONGO_INITDB_ROOT_USERNAME: root
+    #   MONGO_INITDB_ROOT_PASSWORD: rootroot
+    command: mongod --replSet scanv_rs
+  # # redis
