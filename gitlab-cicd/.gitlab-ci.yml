@@ -69,7 +69,7 @@ deploy_job:
     - cat ~/.ssh/id_rsa
     - ssh-add
   script:
-    - rsync -av --include=docker-compose.yml --include=deploy.sh --delete root@huaweiyun:/dockers
-    - ssh huaweiyun "sh deploy.sh"
+    - rsync -av docker-compose.yml deploy.sh root@huaweiyun:/dockers
+    - ssh huaweiyun "cd /dockers;bash deploy.sh;"
   only:
     - master
