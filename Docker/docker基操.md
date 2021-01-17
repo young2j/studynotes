@@ -19,7 +19,7 @@ sudo apt update
 # 安装 pt- transpo -h ttps 等软件包支持 ttps 协议的源：
 sudo apt install apt-transport-https ca-certificates curl software-properties-common
 # 添加源的 gpg 密钥
-curl -fsSL ht ps://download.docker.com/l nux/ubuntu/gpg I sudo apt key add -
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
 
 # 添加源
 sudo add-apt-repository \
@@ -34,7 +34,7 @@ sudo usermod -aG docker $USER
 
 # 启动docker服务
 sudo service docker start # 或者
-dockerd -D -H tcp: //127.0.0.1:2376 # DEBUG HOST
+dockerd -D -H tcp://127.0.0.1:2376 # DEBUG HOST
 # 可在/etc/docker/daemon.json中配置，默认配置在/etc/default/docker中
 {
  "debug": true, 
@@ -46,7 +46,7 @@ dockerd -D -H tcp: //127.0.0.1:2376 # DEBUG HOST
 
 ```shell
 #使用官方提供的脚本来自动化安装 docker:
-sudo curl - sSL https: //get .docker.com/ | sh
+sudo curl -sSL https://get.docker.com/ | sh
 ```
 
 ### docker 仓库

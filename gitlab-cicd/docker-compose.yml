@@ -1,0 +1,28 @@
+version: "3.5"
+services: 
+  dev:
+    image: registry.cn-chengdu.aliyuncs.com/yangsj/gitlab-cicd:latest
+    restart: always
+    container_name: gitlab-cicd
+    network_mode: bridge
+    ports: 
+      - 6660:6660
+    volumes: 
+      - ./logs:/code/logs
+    external_links: 
+      - mysql
+    environment:
+      - TEST_CICD_ENV=dev
+  ci:
+    image: registry.cn-chengdu.aliyuncs.com/yangsj/gitlab-cicd:latest
+    restart: always
+    container_name: gitlab-cicd
+    network_mode: bridge
+    ports: 
+     - 6660:6660
+    volumes: 
+      - ./logs:/code/logs
+    external_links: 
+      - mysql:mysql
+    environment:
+      - TEST_CICD_ENV=ci

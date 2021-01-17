@@ -1,0 +1,75 @@
+stages:
+  - build
+  - test
+  - deploy
+
+variables:
+  MYSQL_ROOT_PASSWORD: rootroot
+  MYSQL_DATABASE: hello
+  MAIN_IMAGE: registry.cn-chengdu.aliyuncs.com/yangsj/gitlab-cicd:latest
+  # DOCKER_TLS_CERTDIR: ""
+  DOCKER_HOST: tcp://docker:2375
+
+build_job:
+  stage: build
+  environment:
+    name: test_ci
+  image: docker:latest
+  services:
+    - docker:dind
+  before_script:
+    # - docker login --username=yangshuangjie111 --password=jge19911001 registry.cn-chengdu.aliyuncs.com
+  script:
+    - set -ex
+    # - docker build . -t $MAIN_IMAGE
+    # - docker push $MAIN_IMAGE
+  only:
+    - dev
+
+test_job:
+  stage: test
+  dependencies:
+    - build_job
+  image: registry.cn-chengdu.aliyuncs.com/yangsj/go-build-alpine:latest
+  environment:
+    name: test_ci
+  services:
+    - name: mysql:5.7.17
+      alias: mysql
+  before_script:
+    - mysql --version
+    - mysql -uroot -p$MYSQL_ROOT_PASSWORD -hmysql < ./db.sql
+   
+  script:
+    - export TEST_CICD_ENV=ci
+    - go fmt && go mod tidy
+    - CGO_ENABLED=0 go build main.go
+    - go test -v
+    # - docker run -d -p 6660:6660 --name gitlabcicd -e TEST_CICD_ENV=ci --link mysql -mount type=bind,source=./logs,destination=/code/logs $MAIN_IMAGE
+  
+  # tags:
+  #   - gitlab-cicd
+  only:
+    - dev
+
+deploy_job:
+  stage: deploy
+  dependencies:
+    - test_job
+  image: registry.cn-chengdu.aliyuncs.com/yangsj/go-build-alpine:latest
+  environment:
+    name: deploy_prod
+  before_script:
+    - mkdir -p ~/.ssh
+    - eval $(ssh-agent -s)
+    - echo "$TEST_KNOWN_HOST" > ~/.ssh/known_hosts
+    - echo "$TEST_CONFIG" > ~/.ssh/config
+    - echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+    - chmod 0600 ~/.ssh/id_rsa
+    - cat ~/.ssh/id_rsa
+    - ssh-add
+  script:
+    - rsync -av --include=docker-compose.yml --include=deploy.sh --delete root@huaweiyun:/dockers
+    - ssh huaweiyun "sh deploy.sh"
+  only:
+    - master
