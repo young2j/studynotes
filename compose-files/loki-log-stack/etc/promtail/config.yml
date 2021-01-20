@@ -1,0 +1,31 @@
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+
+positions:
+  filename: /tmp/positions.yaml
+
+# 收集的日志往loki进行推送
+clients:
+  - url: http://loki:3100/loki/api/v1/push
+
+
+#------Loki日志源配置---------
+scrape_configs:
+# http://localhost:3100/metrics可以直接看到Loki系统日志
+- job_name: system # jobname用于区别从不同的项目收集日志， system定义的是Loki自身产生的日志
+  static_configs:
+  - targets: # 可选配置。老版本的promtail需要进行该配置。Prometheus的服务发现也需要这个入口
+      - localhost
+    labels: # 日志标签，标签会添加到每一行日志上，好的命名方式通常为：环境名-job名或者app名
+      job: varlogs
+      __path__: /var/log/*log # 日志存储的路径，Promtail将会从这个路径去收集日志
+
+# 配置grafana的日志源
+- job_name: grafana
+  static_configs:
+  - targets:
+      - grafana
+    labels:
+      job: grafana
+      __path__: "/Users/knownsec/knownsec/compose-files/data/grafana/log/grafana.log" # 路径要换成你的grafana日志路径

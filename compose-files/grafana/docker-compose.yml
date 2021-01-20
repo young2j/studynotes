@@ -7,7 +7,9 @@ services:
     ports:
       - 3044:3000
     volumes:
-      - ../data/grafana/:/var/lib/grafana
+      - ./grafana/:/var/lib/grafana
+      - ./grafana/grafana.ini:/etc/grafana/grafana.ini
+      - ./grafana/log:/var/log/grafana
     # network_mode: bridge
     environment:
       # - GF_INSTALL_PLUGINS=grafana-clock-panel,grafana-simple-json-datasource
