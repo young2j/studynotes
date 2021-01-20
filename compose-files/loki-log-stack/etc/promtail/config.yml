@@ -17,8 +17,9 @@ scrape_configs:
   static_configs:
   - targets: # 可选配置。老版本的promtail需要进行该配置。Prometheus的服务发现也需要这个入口
       - localhost
-    labels: # 日志标签，标签会添加到每一行日志上，好的命名方式通常为：环境名-job名或者app名
-      job: varlogs
+    labels: # 日志标签，标签{env="dev" job=”syslog”}会添加到每一行日志上，好的命名方式通常为：环境名-job名或者app名
+      job: varlogs  
+      env: dev
       __path__: /var/log/*log # 日志存储的路径，Promtail将会从这个路径去收集日志
 
 # 配置grafana的日志源
@@ -28,4 +29,6 @@ scrape_configs:
       - grafana
     labels:
       job: grafana
-      __path__: "/Users/knownsec/knownsec/compose-files/data/grafana/log/grafana.log" # 路径要换成你的grafana日志路径
+      env: dev
+      # __path__: "/Users/knownsec/knownsec/compose-files/data/grafana/log/grafana.log" # 路径要换成你的grafana日志路径
+      __path__: "/mnt/d/programs/studynotes/compose-files/loki-log-stack/grafana/log/grafana.log" # 路径要换成你的grafana日志路径

@@ -13,8 +13,8 @@ services:
       - loki
     volumes: 
       - ./etc/loki/local-config.yaml:/etc/loki/local-config.yaml
-    external_links: 
-      - grafana
+    # external_links: 
+    #   - grafana
       
   promtail:
     image: grafana/promtail:2.0.0
@@ -25,12 +25,16 @@ services:
     networks:
       - loki
 
-  # grafana:
-  #   image: grafana/grafana:latest
-  #   ports:
-  #     - "3000:3000"
-  #   networks:
-  #     - loki
+  grafana:
+    image: grafana/grafana:latest
+    volumes: 
+      - ./grafana/:/var/lib/grafana
+      - ./grafana/grafana.ini:/etc/grafana/grafana.ini
+      - ./grafana/log:/var/log/grafana
+    ports:
+      - "3000:3000"
+    networks:
+      - loki
 
 
 
