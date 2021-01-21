@@ -14,3 +14,7 @@ build/
 
 # no track
 Python/Matplotlib【Python】/*.png
+
+.DS_Store
+*/.DS_Store
+*/*/.DS_Store
