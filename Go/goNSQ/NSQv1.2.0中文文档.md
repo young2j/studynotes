@@ -434,7 +434,319 @@ SUB: 2014/01/13 16:58:16 duration: 5.251380583s - 36.321mb/s - 190426.114ops/s -
 
 通过标准库，可以轻松地编写网络层和客户端代码。内置内存和 cpu 分析钩子突显了优化机会，并且集成需要很少的精力。我们还发现，在隔离中测试组件、使用接口模拟类型以及迭代构建功能非常容易。
 
-## 内部
+## 内部实现
+
+NSQ 由 3 个守护进程组成：
+
+- **[nsqd](https://nsq.io/components/nsqd.html)**是消息接收、排队和传递消息给客户端的守护进程。
+- **[nsqlookupd](https://nsq.io/components/nsqlookupd.html)**是管理拓扑信息并提供最终一致的发现服务的守护进程。
+- **[nsqadmin](https://nsq.io/components/nsqadmin.html)**是一个 Web UI，可以实时省察集群（并执行各种管理任务）。
+
+NSQ 中的数据流被模型化为流和消费者的树结构。一个**主题**代表一种数据流。**通道**是订阅特定主题的消费者的逻辑分组。
+
+![topics/channels](https://f.cloud.github.com/assets/187441/1700696/f1434dc8-6029-11e3-8a66-18ca4ea10aca.gif)
+
+单个**nsqd**可以包含多个主题，每个主题可以具有多个通道。通道接收主题的所有消息副本，启用多播样式(multicast style)传递，而通道上的每条消息都在其订阅者之间分发，从而实现负载均衡。
+
+这些基元构成了一个强大的框架，用于表达[各种简单而复杂的拓扑](https://nsq.io/deployment/topology_patterns.html)。
+
+有关 NSQ 设计的信息，请参阅[设计文档](https://nsq.io/overview/design.html)。
+
+### 主题和通道
+
+主题和通道是 NSQ 的核心基元(primitives)，它很好地体现了系统设计如何无缝地转换为 Go 的功能。
+
+Go 的通道（因此称为"go-chan"，用于消除歧义）是表达队列的自然方式，因此，NSQ 主题/通道的核心只是消息结构体`Message`指针的缓冲"go-chan"。缓冲的大小等于配置参数`--mem-queue-size`
+
+在从网络中读取数据后，将消息发布到主题涉及如下行为：
+
+1. `Message`结构体的实例化（以及消息体`[]byte`的分配）
+2. 读锁(read-lock)获得`Topic`
+3. 读锁(read-lock)检查发布能力
+4. 发送给一个缓冲"go-chan"
+
+若要将消息从主题发送到其通道，该主题不能依赖于典型的 go-chan 接收语义，因为在 go-chan 上接收的多个 goroutine将分发消息，而所需的最终结果是将每条消息复制到每个通道（goroutine）。
+
+相反，每个主题维护了 3 个主要 的goroutine：
+
+第一个称为`router` ，负责从传入 go-chan 的消息中读取最新发布的消息，并将其存储在队列（内存或磁盘）中。
+
+第二个称为`messagePump` ，负责复制并推送消息到上述通道。
+
+第三个负责 磁盘队列(`DiskQueue`)IO，稍后将讨论.
+
+通道要复杂一些，但共有一个底层目标：暴露一个单输入和单输出的go-chan (以抽象出在内部消息可能存在于内存或磁盘中的事实)：
+
+![queue goroutine](https://f.cloud.github.com/assets/187441/1698990/682fc358-5f76-11e3-9b05-3d5baba67f13.png)
+
+此外，每个通道维护 2 个按时间排序的优先级队列，负责延迟和在途(in-flight)消息的超时（ 附带2个监视它们的goroutine）。
+
+通过管理每个通道的数据结构（而不是依赖于 Go 运行时的全局计时器调度）并行化得以改进。
+
+**注：**在内部，Go 运行时使用单优先级队列和 goroutine来管理计时器。这支持（但不限于）整个`time`包。它通常不需要时间排序的优先级队列，但重要的是要记住，它是一个单一的数据结构，只有一个锁，可能会影响`GOMAXPROCS > 1`时的性能。请参阅[runtime/time.go](https://github.com/golang/go/blob/release-branch.go1.9/src/runtime/time.go#L92)。（在 go-1.10+中不再是了）
+
+### 后台/磁盘队列
+
+NSQ 的设计目标之一是限制内存中保留的消息数。它通过`DiskQueue`(主题或通道的第三个主要goroutine)透明地将消息溢出写入磁盘。
+
+由于内存队列仅仅是一个go-chan，如果可能的话，它首先会尝试将消息路由至内存，然后回调至磁盘：
+
+```go
+for msg := range c.incomingMsgChan {
+	select {
+	case c.memoryMsgChan <- msg:
+	default:
+		err := WriteMessageToBackend(&msgBuf, msg, c.backend)
+		if err != nil {
+			// ... handle errors ...
+		}
+	}
+}
+```
+
+Taking advantage of Go’s statement allows this functionality to be expressed in just a few lines of code: the case above only executes if is full.`select``default``memoryMsgChan`
+
+NSQ also has the concept of **ephemeral** topics/channels. They *discard* message overflow (rather than write to disk) and disappear when they no longer have clients subscribed. This is a perfect use case for Go’s interfaces. Topics and channels have a struct member declared as a *interface* rather than a concrete type. Normal topics and channels use a while ephemeral ones stub in a , which implements a no-op .`Backend``DiskQueue``DummyBackendQueue``Backend`
+
+## Reducing GC Pressure[Anchor link for: reducing gc pressure](https://nsq.io/overview/internals.html#reducing-gc-pressure)
+
+In any garbage collected environment you’re subject to the tension between throughput (doing useful work), latency (responsiveness), and resident set size (footprint).
+
+As of Go 1.2, the GC is mark-and-sweep (parallel), non-generational, non-compacting, stop-the-world and mostly precise . It’s *mostly* precise because the remainder of the work wasn’t completed in time (it’s slated for Go 1.3).
+
+The Go GC will certainly continue to improve, but the universal truth is: ***the less garbage you create the less time you’ll collect\***.
+
+First, it’s important to understand how the GC is behaving *under real workloads*. To this end, **nsqd** publishes GC stats in [statsd](https://github.com/etsy/statsd/) format (alongside other internal metrics). **nsqadmin** displays graphs of these metrics, giving you insight into the GC’s impact in both frequency and duration:
+
+![single node view](https://f.cloud.github.com/assets/187441/1699828/8df666c6-5fc8-11e3-95e6-360b07d3609d.png)
+
+In order to actually *reduce* garbage you need to know where it’s being generated. Once again the Go toolchain provides the answers:
+
+1. Use the [`testing`](https://golang.org/pkg/testing/) package and to benchmark hot code paths. It profiles the number of allocations per iteration (and benchmark runs can be compared with [`benchcmp`](https://godoc.org/golang.org/x/tools/cmd/benchcmp)).`go test -benchmem`
+2. Build using , which outputs the result of [escape analysis](https://en.wikipedia.org/wiki/Escape_analysis).`go build -gcflags -m`
+
+With that in mind, the following optimizations proved useful for **nsqd**:
+
+1. Avoid to conversions.`[]byte``string`
+2. Re-use buffers or objects (and someday possibly [`sync.Pool`](https://groups.google.com/forum/#!topic/golang-dev/kJ_R6vYVYHU) aka [issue 4720](https://code.google.com/p/go/issues/detail?id=4720)).
+3. Pre-allocate slices (specify capacity in ) and always know the number and size of items over the wire.`make`
+4. Apply sane limits to various configurable dials (such as message size).
+5. Avoid boxing (use of ) or unnecessary wrapper types (like a for a “multiple value” go-chan).`interface{}``struct`
+6. Avoid the use of in hot code paths (it allocates).`defer`
+
+### TCP Protocol[Anchor link for: tcp protocol](https://nsq.io/overview/internals.html#tcp-protocol)
+
+The [NSQ TCP protocol](https://nsq.io/clients/tcp_protocol_spec.html) is a shining example of a section where these GC optimization concepts are utilized to great effect.
+
+The protocol is structured with length prefixed frames, making it straightforward and performant to encode and decode:
+
+```
+[x][x][x][x][x][x][x][x][x][x][x][x]...
+|  (int32) ||  (int32) || (binary)
+|  4-byte  ||  4-byte  || N-byte
+------------------------------------...
+    size      frame ID     data
+```
+
+Since the exact type and size of a frame’s components are known ahead of time, we can avoid the [`encoding/binary`](https://golang.org/pkg/encoding/binary/) package’s convenience [`Read()`](https://golang.org/pkg/encoding/binary/#Read) and [`Write()`](https://golang.org/pkg/encoding/binary/#Write) wrappers (and their extraneous interface lookups and conversions) and instead call the appropriate [`binary.BigEndian`](https://golang.org/pkg/encoding/binary/#ByteOrder) methods directly.
+
+To reduce socket IO syscalls, client are wrapped with [`bufio.Reader`](https://golang.org/pkg/bufio/#Reader) and [`bufio.Writer`](https://golang.org/pkg/bufio/#Writer). The exposes [`ReadSlice()`](https://golang.org/pkg/bufio/#Reader.ReadSlice), which reuses its internal buffer. This nearly eliminates allocations while reading off the socket, greatly reducing GC pressure. This is possible because the data associated with most commands does not escape (in the edge cases where this is not true, the data is *explicitly* copied).`net.Conn``Reader`
+
+At an even lower level, a is declared as to be able to use it as a key (slices cannot be used as map keys). However, since data read from the socket is stored as , rather than produce garbage by allocating keys, and to avoid a copy from the slice to the backing array of the , the package is used to cast the slice directly to a :`MessageID``[16]byte``map``[]byte``string``MessageID``unsafe``MessageID`
+
+```
+id := *(*nsq.MessageID)(unsafe.Pointer(&msgID))
+```
+
+**Note:** *This is a hack*. It wouldn’t be necessary if this was optimized by the compiler and [Issue 3512](https://code.google.com/p/go/issues/detail?id=3512) is open to potentially resolve this. It’s also worth reading through [issue 5376](https://code.google.com/p/go/issues/detail?id=5376), which talks about the possibility of a “const like” type that could be used interchangeably where is accepted, *without* allocating and copying.`byte``string`
+
+Similarly, the Go standard library only provides numeric conversion methods on a . In order to avoid allocations, **nsqd** uses a [custom base 10 conversion method](https://github.com/nsqio/nsq/blob/v1.2.0/internal/protocol/byte_base10.go#L9-L29) that operates directly on a .`string``string``[]byte`
+
+These may seem like micro-optimizations but the TCP protocol contains some of the *hottest* code paths. In aggregate, at the rate of tens of thousands of messages per second, they have a significant impact on the number of allocations and overhead:
+
+```
+benchmark                    old ns/op    new ns/op    delta
+BenchmarkProtocolV2Data           3575         1963  -45.09%
+
+benchmark                    old ns/op    new ns/op    delta
+BenchmarkProtocolV2Sub256        57964        14568  -74.87%
+BenchmarkProtocolV2Sub512        58212        16193  -72.18%
+BenchmarkProtocolV2Sub1k         58549        19490  -66.71%
+BenchmarkProtocolV2Sub2k         63430        27840  -56.11%
+
+benchmark                   old allocs   new allocs    delta
+BenchmarkProtocolV2Sub256           56           39  -30.36%
+BenchmarkProtocolV2Sub512           56           39  -30.36%
+BenchmarkProtocolV2Sub1k            56           39  -30.36%
+BenchmarkProtocolV2Sub2k            58           42  -27.59%
+```
+
+## HTTP[Anchor link for: http](https://nsq.io/overview/internals.html#http)
+
+NSQ’s HTTP API is built on top of Go’s [`net/http`](https://golang.org/pkg/net/http/) package. Because it’s *just* HTTP, it can be leveraged in almost any modern programming environment without special client libraries.
+
+Its simplicity belies its power, as one of the most interesting aspects of Go’s HTTP tool-chest is the wide range of debugging capabilities it supports. The [`net/http/pprof`](https://golang.org/pkg/net/http/pprof/) package integrates directly with the native HTTP server, exposing endpoints to retrieve CPU, heap, goroutine, and OS thread profiles. These can be targeted directly from the tool:`go`
+
+```
+$ go tool pprof http://127.0.0.1:4151/debug/pprof/profile
+```
+
+This is a tremendously valuable for debugging and profiling a *running* process!
+
+In addition, a endpoint returns a slew of metrics in either JSON or pretty-printed text, making it easy for an administrator to introspect from the command line in realtime:`/stats`
+
+```
+$ watch -n 0.5 'curl -s http://127.0.0.1:4151/stats | grep -v connected'
+```
+
+This produces continuous output like:
+
+```
+[page_views     ] depth: 0     be-depth: 0     msgs: 105525994 e2e%: 6.6s, 6.2s, 6.2s
+    [page_view_counter        ] depth: 0     be-depth: 0     inflt: 432  def: 0    re-q: 34684 timeout: 34038 msgs: 105525994 e2e%: 5.1s, 5.1s, 4.6s
+    [realtime_score           ] depth: 1828  be-depth: 0     inflt: 1368 def: 0    re-q: 25188 timeout: 11336 msgs: 105525994 e2e%: 9.0s, 9.0s, 7.8s
+    [variants_writer          ] depth: 0     be-depth: 0     inflt: 592  def: 0    re-q: 37068 timeout: 37068 msgs: 105525994 e2e%: 8.2s, 8.2s, 8.2s
+
+[poll_requests  ] depth: 0     be-depth: 0     msgs: 11485060 e2e%: 167.5ms, 167.5ms, 138.1ms
+    [social_data_collector    ] depth: 0     be-depth: 0     inflt: 2    def: 3    re-q: 7568  timeout: 402   msgs: 11485060 e2e%: 186.6ms, 186.6ms, 138.1ms
+
+[social_data    ] depth: 0     be-depth: 0     msgs: 60145188 e2e%: 199.0s, 199.0s, 199.0s
+    [events_writer            ] depth: 0     be-depth: 0     inflt: 226  def: 0    re-q: 32584 timeout: 30542 msgs: 60145188 e2e%: 6.7s, 6.7s, 6.7s
+    [social_delta_counter     ] depth: 17328 be-depth: 7327  inflt: 179  def: 1    re-q: 155843 timeout: 11514 msgs: 60145188 e2e%: 234.1s, 234.1s, 231.8s
+
+[time_on_site_ticks] depth: 0     be-depth: 0     msgs: 35717814 e2e%: 0.0ns, 0.0ns, 0.0ns
+    [tail821042#ephemeral     ] depth: 0     be-depth: 0     inflt: 0    def: 0    re-q: 0     timeout: 0     msgs: 33909699 e2e%: 0.0ns, 0.0ns, 0.0ns
+```
+
+Finally, each new Go release typically brings [measurable performance gains](https://github.com/davecheney/autobench). It’s always nice when recompiling against the latest version of Go provides a free boost!
+
+## Dependencies[Anchor link for: dependencies](https://nsq.io/overview/internals.html#dependencies)
+
+Coming from other ecosystems, Go’s philosophy (or lack thereof) on managing dependencies takes a little time to get used to.
+
+NSQ evolved from being a single giant repo, with *relative imports* and little to no separation between internal packages, to fully embracing the recommended best practices with respect to structure and dependency management.
+
+There are two main schools of thought:
+
+1. **Vendoring**: copy dependencies at the correct revision into your application’s repo and modify your import paths to reference the local copy.
+2. **Virtual Env**: list the revisions of dependencies you require and at build time, produce a pristine environment containing those pinned dependencies.`GOPATH`
+
+**Note:** This really only applies to *binary* packages as it doesn’t make sense for an importable package to make intermediate decisions as to which version of a dependency to use.
+
+NSQ uses method (2) above. (It first used [gpm](https://github.com/pote/gpm), then [dep](https://github.com/golang/dep), and now uses [Go modules](https://github.com/golang/go/wiki/Modules)).
+
+## Testing[Anchor link for: testing](https://nsq.io/overview/internals.html#testing)
+
+Go provides solid built-in support for writing tests and benchmarks and, because Go makes it so easy to model concurrent operations, it’s trivial to stand up a full-fledged instance of **nsqd** inside your test environment.
+
+However, there was one aspect of the initial implementation that became problematic for testing: global state. The most obvious offender was the use of a global variable that held the reference to the instance of **nsqd** at runtime, i.e. .`var nsqd *NSQd`
+
+Certain tests would inadvertently mask this global variable in their local scope by using short-form variable assignment, i.e. . This meant that the global reference did not point to the instance that was currently running, breaking tests.`nsqd := NewNSQd(...)`
+
+To resolve this, a struct is passed around that contains configuration metadata and a reference to the parent **nsqd**. All references to global state were replaced with this local , allowing children (topics, channels, protocol handlers, etc.) to safely access this data and making it more reliable to test.`Context``Context`
+
+## Robustness[Anchor link for: robustness](https://nsq.io/overview/internals.html#robustness)
+
+A system that isn’t robust in the face of changing network conditions or unexpected events is a system that will not perform well in a distributed production environment.
+
+NSQ is designed and implemented in a way that allows the system to tolerate failure and behave in a consistent, predictable, and unsurprising way.
+
+The overarching philosophy is to fail fast, treat errors as fatal, and provide a means to debug any issues that do occur.
+
+But, in order to *react* you need to be able to *detect* exceptional conditions…
+
+### Heartbeats and Timeouts[Anchor link for: heartbeats and timeouts](https://nsq.io/overview/internals.html#heartbeats-and-timeouts)
+
+The NSQ TCP protocol is push oriented. After connection, handshake, and subscription the consumer is placed in a state of . When the consumer is ready to receive messages it updates that state to the number of messages it is willing to accept. NSQ client libraries continually manage this behind the scenes, resulting in a flow-controlled stream of messages.`RDY``0``RDY`
+
+Periodically, **nsqd** will send a heartbeat over the connection. The client can configure the interval between heartbeats but **nsqd** expects a response before it sends the next one.
+
+The combination of application level heartbeats and state avoids [head-of-line blocking](https://en.wikipedia.org/wiki/Head-of-line_blocking), which can otherwise render heartbeats useless (i.e. if a consumer is behind in processing message flow the OS’s receive buffer will fill up, blocking heartbeats).`RDY`
+
+To guarantee progress, all network IO is bound with deadlines relative to the configured heartbeat interval. This means that you can literally unplug the network connection between **nsqd** and a consumer and it will detect and properly handle the error.
+
+When a fatal error is detected the client connection is forcibly closed. In-flight messages are timed out and re-queued for delivery to another consumer. Finally, the error is logged and various internal metrics are incremented.
+
+### Managing Goroutines[Anchor link for: managing goroutines](https://nsq.io/overview/internals.html#managing-goroutines)
+
+It’s surprisingly easy to *start* goroutines. Unfortunately, it isn’t quite as easy to orchestrate their cleanup. Avoiding deadlocks is also challenging. Most often this boils down to an ordering problem, where a goroutine receiving on a go-chan exits *before* the upstream goroutines sending on it.
+
+Why care at all though? It’s simple, an orphaned goroutine is a *memory leak*. Memory leaks in long running daemons are bad, especially when the expectation is that your process will be stable when all else fails.
+
+To further complicate things, a typical **nsqd** process has *many* goroutines involved in message delivery. Internally, message “ownership” changes often. To be able to shutdown cleanly, it’s incredibly important to account for all *intraprocess* messages.
+
+Although there aren’t any magic bullets, the following techniques make it a little easier to manage…
+
+#### WaitGroups[Anchor link for: waitgroups](https://nsq.io/overview/internals.html#waitgroups)
+
+The [`sync`](https://golang.org/pkg/sync/) package provides [`sync.WaitGroup`](https://golang.org/pkg/sync/#WaitGroup), which can be used to perform accounting of how many goroutines are live (and provide a means to wait on their exit).
+
+To reduce the typical boilerplate, **nsqd** uses this wrapper:
+
+```
+type WaitGroupWrapper struct {
+	sync.WaitGroup
+}
+
+func (w *WaitGroupWrapper) Wrap(cb func()) {
+	w.Add(1)
+	go func() {
+		cb()
+		w.Done()
+	}()
+}
+
+// can be used as follows:
+wg := WaitGroupWrapper{}
+wg.Wrap(func() { n.idPump() })
+...
+wg.Wait()
+```
+
+#### Exit Signaling[Anchor link for: exit signaling](https://nsq.io/overview/internals.html#exit-signaling)
+
+The easiest way to trigger an event in multiple child goroutines is to provide a single go-chan that you close when ready. All pending receives on that go-chan will activate, rather than having to send a separate signal to each goroutine.
+
+```
+func work() {
+    exitChan := make(chan int)
+    go task1(exitChan)
+    go task2(exitChan)
+    time.Sleep(5 * time.Second)
+    close(exitChan)
+}
+func task1(exitChan chan int) {
+    <-exitChan
+    log.Printf("task1 exiting")
+}
+
+func task2(exitChan chan int) {
+    <-exitChan
+    log.Printf("task2 exiting")
+}
+```
+
+#### 同步退出[锚点链接：同步退出](https://nsq.io/overview/internals.html#synchronizing-exit)
+
+实现可靠、无死锁的退出路径是相当困难的，该路径占所有飞行中消息。一些提示：
+
+1. 理想情况下， 负责发送 go - chan 的 go 例程也应该负责关闭它。
+2. 如果邮件不能丢失，请确保清空相关的 go-chans（尤其是未缓冲邮件！），以确保发件人能够取得进展。
+3. 或者，如果消息不再相关，则发送单个 go-chan 时应转换为 添加退出信号（如上所述），以保证进度。`select`
+4. 一般顺序应为：
+   1. 停止接受新连接（关闭侦听器）
+   2. 信号出口到子程序（见上文）
+   3. 等待 go 例程出口（见上文）`WaitGroup`
+   4. 恢复缓冲数据
+   5. 刷新留给磁盘的任何东西
+
+#### 测 井[锚点链接：日志记录](https://nsq.io/overview/internals.html#logging)
+
+最后，最重要的工具，在您的处置***是记录你的戈例程的入口和出口！\***它使*在死*锁或泄漏的情况下识别罪魁祸首变得无限容易。
+
+**nsqd**日志行包括将 go 例程与其同级（和父级）关联的信息，例如客户端的远程地址或主题/通道名称。
+
+日志是冗长的，但不是冗长的，到日志是压倒性的点。有一条细线，但**nsqd**倾向于在*发生*故障时在日志中包含更多信息，而不是试图以牺牲有用性为代价来减少聊天。
 
 # 组件
 
