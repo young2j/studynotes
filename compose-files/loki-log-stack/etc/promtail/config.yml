@@ -1,7 +1,9 @@
+# promtail 作为服务的地址
 server:
   http_listen_port: 9080
   grpc_listen_port: 0
 
+# 记录读取日志文件的位置信息，例如偏移量，在重启时会根据记录的偏移继续往后读取
 positions:
   filename: /tmp/positions.yaml
 
@@ -10,7 +12,7 @@ clients:
   - url: http://loki:3100/loki/api/v1/push
 
 
-#------Loki日志源配置---------
+#------Loki日志抓取配置---------
 scrape_configs:
 # http://localhost:3100/metrics可以直接看到Loki系统日志
 - job_name: system # jobname用于区别从不同的项目收集日志， system定义的是Loki自身产生的日志
@@ -24,11 +26,21 @@ scrape_configs:
 
 # 配置grafana的日志源
 - job_name: grafana
+  pipeline_stages:
   static_configs:
   - targets:
       - grafana
     labels:
       job: grafana
       env: dev
-      # __path__: "/Users/knownsec/knownsec/compose-files/data/grafana/log/grafana.log" # 路径要换成你的grafana日志路径
-      __path__: "/mnt/d/programs/studynotes/compose-files/loki-log-stack/grafana/log/grafana.log" # 路径要换成你的grafana日志路径
+      # __path__: /Users/knownsec/knownsec/compose-files/data/grafana/log/grafana.log # 路径要换成你的grafana日志路径
+      __path__: /mnt/d/programs/studynotes/compose-files/loki-log-stack/grafana/log/grafana.log # 路径要换成你的grafana日志路径
+
+- job_name: test
+  static_configs:
+  - targets:
+    - test_local
+    labels:
+      job: test
+      env: test
+      __path__: /mnt/d/programs/studynotes/compose-files/loki-log-stack/logs/log.log
