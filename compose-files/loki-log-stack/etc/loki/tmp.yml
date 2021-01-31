@@ -1,0 +1,404 @@
+# Loki运行包含的组件或模块，支持选项有：
+# all, distributor, ingester, querier, query-frontend, table-manager.
+target: <string> | default = "all"
+
+# 启用auth授权
+# 如果为true，则必须在请求头中添加X-Scope-OrgID=<tenantID>
+# 如果为false，则X-Scope-OrgID始终为"fake"
+auth_enabled: <boolean> | default = true
+
+# Loki服务配置
+server: 
+  http_listen_address: <string>
+  http_listen_port: <int> | default = 80
+  grpc_listen_address: <string>
+  grpc_listen_port: <int> | default = 9095
+  log_level: <string> | default = "info"
+  http_prefix: <string> | default = "/api/prom"
+
+# distributor 组件配置
+distributor:
+  ring:
+    kvstore:
+      # hash环的后台存储配置，使用的是键值对存储库
+      # 支持 consul, etcd, inmemory, memberlist
+      store: <string>
+
+      # 存储键的前缀，必须以斜杠'/'结尾
+      prefix: <string> | default = "collectors/"
+
+      # 针对设置的不同store，配置不同的store backend，只能配置其中之一
+      consul: <consul_config>
+      etcd: <etcd_config>
+      memberlist: <memberlist_config>
+
+# querier组件配置
+querier: 
+  query_timeout: <duration> | default = 1m
+  tail_max_duration: <duration> | default = 1h
+  extra_query_delay: <duration> | default = 0s
+  query_ingesters_within: <duration> | default = 0s
+  engine:
+    timeout: <duration> | default = 3m
+    max_look_back_period: <duration> | default = 30s
+
+# query_frontend 组件配置
+frontend: 
+  # 每个查询端每个租户最大未处理或未完成请求数
+  max_outstanding_per_tenant: <int> | default = 100
+
+  # http response 压缩
+  compress_responses: <boolean> | default = false
+
+  # tail查询的代理url
+  tail_proxy_url: <string> | default = ""
+
+
+# 配置查询拆分、查询缓存
+query_range:
+  # 按照interval进行查询分割以进行并行查询。默认0，禁用此功能。
+  # 应使用24小时的倍数以避免querier下载和处理同样的chunks。
+  # 如果开启了缓存，这也决定了缓存keys的选择。
+  split_queries_by_interval: <duration> | default = 0s
+
+  # 是否开启结果缓存
+  cache_results: <boolean> | default = false
+
+  results_cache:
+    # 结果缓存配置
+    cache: <cache_config>
+
+  # 请求的最大重试次数
+  max_retries: <int> | default = 5
+
+  # 仅针对chunks存储引擎的分片查询并行化
+  parallelise_shardable_queries: <boolean> | default = false
+
+# ruler组件配置，配置告警
+ruler: 
+  storage:
+    # rule后台存储类型，可取值azure, gcs, s3, swift, local
+    type: local
+    local:
+      # rules存储文件目录
+      directory: <filename> | default = ""
+  
+  # 存储临时rule文件的路径
+  rule_path: <filename> | default = "/rules"
+  
+  # 发送告警通知的url，多个url以逗号分隔。
+  # 每个url被视为单独的组
+  alertmanager_url: <string> | default = ""
+  
+  # 启用DNS服务解析alert hosts
+  enable_alertmanager_discovery: <boolean> | default = false
+  
+  # DNS解析alert hosts的刷新间隔
+  alertmanager_refresh_interval: <duration> | default = 1m
+  
+  ring:
+    kvstore:
+      # hash环的后端存储，支持: consul, etcd, inmemory, memberlist, multi.
+      store: <string> | default = "consul"
+  
+      # 存储keys的前缀，必须以'/'结尾'
+      prefix: <string> | default = "rulers/"
+  
+      # 存储库配置,对应store的值进行配置
+      consul: <consul_config>
+      etcd: <etcd_config>
+      multi:
+        primary: <string> | default = ""
+        secondary: <string> | default = ""
+        mirror_enabled: <boolean> | default = false
+        mirror_timeout: <duration> | default = 2s
+
+    # 每一个ingester的tokens数量
+    num_tokens: <int> | default = 128
+  
+  # 刷新rules组的间隔
+  flush_period: <duration> | default = 1m
+  
+  # 是否启用rulers API
+  enable_api: <boolean> | default = false
+
+
+
+# 配置distributor如何连接到ingester
+ingester_client:
+  # 连接池配置
+  pool_config:
+    # 是否对ingester进行健康检查
+    health_check_ingesters: <boolean> | default = false
+
+    # ingester服务关闭后，经过多久清理掉客户端连接
+    client_cleanup_period: <duration> | default = 15s
+
+  # 远程客户端请求超时
+  remote_timeout: <duration> | default = 5s
+
+  # 连接ingester的grpc配置
+  grpc_client_config: <grpc_client_config>
+
+
+
+# 组件ingester配置，包含ingester如何注册至key-value存储
+ingester:
+  # ingester运作的生命周期配置
+  lifecycler:
+    ring:
+      kvstore:
+        # hash ring 的后端存储. 支持: consul, etcd, inmemory, memberlist
+        store: <string> | default = "consul"
+
+        # 存储keys的前缀, 必须以'/'结尾
+        prefix: <string> | default = "collectors/"
+        consul: <consul_config>
+        etcd: <etcd_config>
+        memberlist: <memberlist_config>
+
+      # 副本因子，即负责读写的ingester数
+      replication_factor: <int> | default = 3
+
+    # 当前生命周期中，ingester加入hash ring将生成的tokens数
+    num_tokens: <int> | default = 128
+
+
+  # 每一个日志流的并发刷新数（chunk刷新至store）
+  concurrent_flushes: <int> | default = 16
+
+  # chunks被刷新后，在内存中继续保存多久
+  chunk_retain_period: <duration> | default = 15m
+
+  # 当chunk的大小没有达到设定的最大值，如果一直没有任何更新，
+  # 在达到一定时间后将强制刷新，默认30m没有更新就会刷新至store
+  chunk_idle_period: <duration> | default = 30m
+
+  # 当接收的数据达到256kb时，将在chunk中进行压缩
+  chunk_block_size: <int> | default = 262144
+
+  # chunk压缩后的目标大小，这个值不是精确的，可能稍大，也可能明显小于目标值。
+  # 默认为0，则chunk固定为10个block
+  # 指定一个数值，则会根据目标大小创建blocks数
+  chunk_target_size: <int> | default = 0
+
+  # 压缩算法：
+  # - `gzip` 压缩率高，但解压速度较慢(144kB/chunk)
+  # - `lz4` 压缩速度最快(188kB/chunk)
+  # - `snappy` 快且流行的压缩算法(272kB/chunk)
+  chunk_encoding: <string> | default = gzip
+
+  # chunks在内存中保存的时间，如果某个时序流运行时间超过了这个值，chunk将被刷新至store，然后创建一个新的chunk
+  max_chunk_age: <duration> | default = 1h
+
+
+# 日志数据后端存储配置
+storage_config:
+  aws:
+  bigtable:
+  gcs:
+  cassandra:
+  swift:
+
+  # index store in boltdb——旧版本使用
+  boltdb:
+    # Location of BoltDB index files.
+    directory: <string>
+
+  # index store in boltdb_shipper——新版使用
+  boltdb_shipper:
+    active_index_directory: /loki/boltdb-shipper-active
+    cache_location: /loki/boltdb-shipper-cache
+    cache_ttl: 24h  
+    shared_store: filesystem
+
+  # chunk store
+  filesystem:
+    # Directory to store chunks in.
+    directory: <string>
+
+  # 索引缓存校验, 其值必须小于等于ingester.chunk_idle_period
+  index_cache_validity: <duration> | default = 5m
+
+  # 每个batch提取的最大chunks数
+  max_chunk_batch_size: <int> | default = 50
+
+
+# 在指定的存储中具体如何存储数据的配置
+chunk_store_config:
+  # chunks 缓存配置
+  chunk_cache_config: <cache_config>
+
+  # 去重缓存配置
+  write_dedupe_cache_config: <cache_config>
+
+  # chunk从更新到保存至store的最小时间
+  min_chunk_age: <duration>
+
+  # 只缓存这个时间值之前的索引，默认不启用
+  cache_lookups_older_than: <duration>
+
+  # 查询回溯的最大时间限制，默认不启用
+  # 值必须小于等于table_manager.retention_period
+  max_look_back_period: <duration>
+
+
+
+# chunk和index的 schema配置、以及schema存储地址配置
+schema_config: <schema_config>
+  configs:
+    # index buckets 开始创建的日期。格式为YYYY-MM-DD
+    - from: <daytime>
+    # 使用何种index store. 
+    # 支持aws, aws-dynamo, gcp, bigtable, bigtable-hashed,cassandra, boltdb, boltdb-shipper
+    store: <string>
+
+    # 使用何种chunk store.
+    # 支持 aws, azure, gcp, bigtable, gcs, cassandra, swift , filesystem. 
+    # 忽略设置将使用和store一样的值
+    object_store: <string>
+
+    # schema 版本， 当前推荐v11
+    schema: <string>
+
+    # 配置index更新和存储的细节
+    index:
+      # 表前缀
+      prefix: <string>
+      # 表期间
+      period: <duration> | default = 168h
+      # 给所有表添加tags， map结构
+      tags:
+        <string>: <string>
+
+    # 配置chunk更新和存储的细节
+    chunks:
+      # 表前缀
+      prefix: <string>
+      # 表期间
+      period: <duration> | default = 168h
+      # 给所有表添加tags， map结构
+      tags:
+        <string>: <string>
+
+    # 创建多少分片，仅使用于schema v10及以上
+    row_shards: <int> | default = 16
+
+
+
+# 全局或租户限制配置
+limits_config:
+ 
+  # 是否拒绝老样本
+  reject_old_samples: <bool> | default = false
+
+  # 拒绝之前，可接受的最大样本年龄
+  reject_old_samples_max_age: <duration> | default = 336h
+
+  # 查询返回的最大日志数
+  max_entries_limit_per_query: <int> | default = 5000 
+
+  # 每个查询可以提取的最大chunks数
+  max_chunks_per_query: <int> | default = 2000000
+
+  # frontend 可调度的最大查询并行数
+  max_query_parallelism: <int> | default = 14
+
+
+# 在querier组件中负责执行查询的worker配置
+frontend_worker:
+  # 查询前端的地址，格式为 host:port
+  frontend_address: <string> | default = ""
+
+  # 查询的并行数
+  parallelism: <int> | default = 10
+
+
+
+# table_manager配置，主要配置日志数据的保留时间
+table_manager:
+
+  # 删除表格保留的开关
+  retention_deletes_enabled: <boolean> | default = false
+
+  # 被删除前，需要保留多久之前的表格。
+  # 默认0s，禁止删除
+  # 这个值必须是index/chunks 的table period的倍数
+  retention_period: <duration> | default = 0s
+
+
+# 运行时配置，负责重新载入运行时的配置文件
+runtime_config:
+  # 运行时配置文件
+  file: <string>| default = empty
+  # 检测运行时配置的间隔
+  period: <duration>| default = 10s
+
+# tracing配置
+tracing: 
+  # 是否启用jaeger调用跟踪
+  enabled: <boolean>| default = true
+
+
+grpc_client_config:
+  max_recv_msg_size: <int> | default = 104857600
+  max_send_msg_size: <int> | default = 16777216
+  use_gzip_compression: <bool> | default = false
+  rate_limit: <float> | default = 0
+  rate_limit_burst: <int> | default = 0
+  backoff_on_ratelimits: <bool> | default = false
+  backoff_config:
+    min_period: <duration> | default = 100ms
+    max_period: <duration> | default = 10s
+    max_retries: <int> | default = 10
+
+consul_config:
+  host: <string> | default = "localhost:8500"
+  acl_token: <string>
+  http_client_timeout: <duration> | default = 20s
+  consistent_reads: <boolean> | default = true
+
+etcd_config:
+  endpoints: <list of string> | default = []
+  dial_timeout: <duration> | default = 10s
+  max_retries: <int> | default = 10
+
+cache_config:
+  enable_fifocache: <boolean>
+  default_validity: <duration>
+  background:    
+    writeback_goroutines: <int> | default = 10
+    writeback_buffer: <int> = 10000
+
+  memcached:
+    expiration: <duration>
+    batch_size: <int>
+    parallelism: <int> | default = 100
+
+  memcached_client:    
+    host: <string>
+    service: <string> | default = "memcached"
+    timeout: <duration> | default = 100ms
+    max_idle_conns: <int> | default = 16
+    update_interval: <duration> | default = 1m
+    consistent_hash: <bool>
+  
+  redis:    
+    endpoint: <string>
+    master_name: <string>
+    timeout: <duration> | default = 100ms
+    expiration: <duration> | default = 0s
+    db: <int>
+    pool_size: <int> | default = 0
+    password: <string>
+    enable_tls: <boolean> | default = false
+    idle_timeout: <duration> | default = 0s
+    max_connection_age: <duration> | default = 0s
+  
+  fifocache:    
+    max_size_bytes: <string> | default = ""
+    max_size_items: <int> | default = 0
+    validity: <duration> | default = 0s
+
+
+
