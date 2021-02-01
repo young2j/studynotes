@@ -4,11 +4,11 @@
 python -m django --version
 ```
 
-```shell
+```bash
 django-admin startproject demosite
 demosite
 ├── manage.py
-└── demosite
+└── demosite -->main
     ├── __init__.py
     ├── asgi.py
     ├── settings.py
