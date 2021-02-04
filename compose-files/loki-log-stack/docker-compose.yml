@@ -14,9 +14,8 @@ services:
     networks:
       - loki
     volumes: 
-      - ./etc/loki/local-config.yaml:/etc/loki/local-config.yaml
-    # external_links: 
-    #   - grafana
+      - ./etc/loki/local-config.yaml:/etc/loki/local-config.yaml -print-config-stderr=true
+      - ./loki:/loki
       
   promtail:
     image: grafana/promtail:2.0.0
@@ -25,6 +24,9 @@ services:
     volumes:
       - /var/log:/var/log
       - ./etc/promtail/config.yml:/etc/promtail/config.yml
+      - ./grafana/log:/promtail/log
+      - ./promtail/positions.yaml:/tmp/positions.yaml
+      
     command: -config.file=/etc/promtail/config.yml -print-config-stderr=true
     networks:
       - loki

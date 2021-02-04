@@ -29,18 +29,8 @@ scrape_configs:
   pipeline_stages:
   static_configs:
   - targets:
-      - grafana
+      - log-stack-grafana
     labels:
       job: grafana
       env: dev
-      # __path__: /Users/knownsec/knownsec/compose-files/data/grafana/log/grafana.log # 路径要换成你的grafana日志路径
-      __path__: /mnt/d/programs/studynotes/compose-files/loki-log-stack/grafana/log/grafana.log # 路径要换成你的grafana日志路径
-
-- job_name: test
-  static_configs:
-  - targets:
-    - test_local
-    labels:
-      job: test
-      env: test
-      __path__: /mnt/d/programs/studynotes/compose-files/loki-log-stack/logs/log.log
+      __path__: /promtail/log/*.log # 路径要换成你挂载的grafana日志路径

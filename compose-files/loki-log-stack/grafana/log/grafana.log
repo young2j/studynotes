@@ -1,0 +1,8 @@
+time="2021-02-04T23:31:24.367249900+08:00" level=info msg="shim containerd-shim started" address=/containerd-shim/aedec70c1318022505a56e36164c350ca7ac03ec70d97933ba5c1a2116e558bf.sock debug=false pid=7383
+time="2021-02-04T23:31:24.309476600+08:00" level=info msg="shim containerd-shim started" address=/containerd-shim/963e456b9804a006fbca604260ad94616493791a89a82a6973584e8faaff89c1.sock debug=false pid=7348
+time="2021-02-04T23:28:43.314631000+08:00" level=info msg="ignoring event" module=libcontainerd namespace=moby topic=/tasks/delete type="*events.TaskDelete"
+time="2021-02-04T23:28:43.314600700+08:00" level=info msg="ignoring event" module=libcontainerd namespace=moby topic=/tasks/delete type="*events.TaskDelete"
+time="2021-02-04T23:28:43.303596900+08:00" level=info msg="shim reaped" id=3972ba86bcdb46ba658f825e429bd8ac63248c7be8b0571a86fb8102a1b03bb9
+time="2021-02-04T23:28:43.303593900+08:00" level=info msg="shim reaped" id=d10a1af2e09dd2731e56cc7c4f9e41563a855411db09d39aa20e778edc950496
+time="2021-02-04T23:28:38.642472600+08:00" level=info msg="ignoring event" module=libcontainerd namespace=moby topic=/tasks/delete type="*events.TaskDelete"
+time="2021-02-04T23:28:38.631803700+08:00" level=info msg="shim reaped" id=371adf6ddb417286705432045599cc5aa2bed8d27d3e6e6bc7e3a6f7cb8a5b24
