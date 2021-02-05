@@ -77,7 +77,9 @@ storage_config:
     active_index_directory: /tmp/loki/index
     # index缓存存储的目录
     cache_location: /tmp/loki/boltdb-cache
-  
+    # index缓存有效期
+    cache_ttl: 24h
+
   # chunks刷新后存储的目录地址
   filesystem:
     directory: /loki/chunks
@@ -139,3 +141,8 @@ frontend:
 querier:
   # 两小时以内的查询会先到ingester去查询，超过两小时的直接查询存储后台
   query_ingesters_within: 2h
+
+
+compactor:
+  working_directory: /loki/boltdb-shipper-compactor
+  shared_store: filesystem

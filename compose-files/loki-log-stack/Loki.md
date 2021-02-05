@@ -522,6 +522,10 @@ ingester_client:
 ingester:
   # ingester运作的生命周期配置
   lifecycler:
+  	# 当一个ingester退出时，新的ingester在60s后自动交接
+  	join_after: <duration> | default = 0s
+    # ingester退出前的休眠时间，主要用于确保metrics抓取
+    final_sleep: <duration> | default = 30s
     ring:
       kvstore:
         # hash ring 的后端存储. 支持: consul, etcd, inmemory, memberlist
@@ -651,11 +655,13 @@ schema_config: <schema_config>
     # schema 版本， 当前推荐v11
     schema: <string>
 
-    # 配置index更新和存储的细节
+    # 配置index如何更新和存储
     index:
-      # 表前缀
+      # 索引表前缀
       prefix: <string>
-      # 表期间
+      # 索引表期间, 最好的是24小时
+      # "BoltDB shipper works best with 24h periodic index files."
+      # https://grafana.com/docs/loki/latest/operations/storage/boltdb-shipper/
       period: <duration> | default = 168h
       # 给所有表添加tags， map结构
       tags:
@@ -663,9 +669,9 @@ schema_config: <schema_config>
 
     # 配置chunk更新和存储的细节
     chunks:
-      # 表前缀
+      # chunks表前缀
       prefix: <string>
-      # 表期间
+      # chunks表期间
       period: <duration> | default = 168h
       # 给所有表添加tags， map结构
       tags:
@@ -697,6 +703,9 @@ limits_config:
 
   # frontend 可调度的最大查询并行数
   max_query_parallelism: <int> | default = 14
+  
+  # 每个用户日志数据流引入的速率限制，默认4mb/s
+  ingestion_rate_mb: <float> | default = 4
 ```
 
 ## table_manager
@@ -706,13 +715,23 @@ limits_config:
 ```yaml
 # table_manager配置，主要配置日志数据的保留时间
 table_manager:
-  # 删除表格保留的开关
+  # 删除表格保留的开与关
   retention_deletes_enabled: <boolean> | default = false
 
   # 被删除前，需要保留多久之前的表格。
   # 默认0s，禁止删除
   # 这个值必须是index/chunks 的table period的倍数
   retention_period: <duration> | default = 0s
+```
+
+## compactor_config
+
+compactor是使用boltdb-shipper时特定的一个服务，主要通过去除重复索引文件、对每个索引表的boltdb文件进行合并来减少索引的大小， 可以提升查询效率。如果单个ingester每天创建超过96个文件，则强烈推荐运行一个compactor。[原文](https://grafana.com/docs/loki/latest/operations/storage/boltdb-shipper/#compactor)
+
+```yaml
+compactor:
+  working_directory: /loki/boltdb-shipper-compactor
+  shared_store: filesystem
 ```
 
 ## tracing_config
