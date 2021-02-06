@@ -71,7 +71,7 @@ class IndexView(generic.ListView):
 class DetailView(generic.DetailView):
     # 指定作用的模型名，
     # DetailView会默认提供名为question的context，即context={'question':question}
-    # ListVies会默认提供名为question_list的context，即context={'question_list':question_list}
+    # ListView会默认提供名为question_list的context，即context={'question_list':question_list}
     model = Question
     # 指定模板名，默认会使用<app name>/<model name>_detail.html的模板，即polls/question_detail.html
     template_name = 'polls/detail.html'

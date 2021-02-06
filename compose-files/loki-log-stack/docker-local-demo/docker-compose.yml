@@ -24,9 +24,7 @@ services:
     volumes:
       - /var/log:/var/log
       - ./etc/promtail/config.yml:/etc/promtail/config.yml
-      - ./grafana/log:/promtail/log
-      - ./promtail/positions.yaml:/tmp/positions.yaml
-      
+      - ./loki:/loki
     command: -config.file=/etc/promtail/config.yml -print-config-stderr=true
     networks:
       - loki

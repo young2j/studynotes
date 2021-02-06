@@ -115,7 +115,7 @@ def get_paginated_response(self, data):
 
 > 主要重写了视图as_view()方法，可以将http method 绑定到对应的action，如：
 >
-> MyViewSet.as_view({'get': 'list', 'post': 'create'})
+> `MyViewSet.as_view({'get': 'list', 'post': 'create'})`
 >
 > 实现 类方法，通过装饰器@action获得对应的视图处理
 >
@@ -143,7 +143,7 @@ def get_paginated_response(self, data):
 
 #### ModelViewSet
 
-> 继承了		mixins.CreateModelMixin,
+> 继承了	 mixins.CreateModelMixin,
 >         			mixins.RetrieveModelMixin,
 >                     mixins.UpdateModelMixin,
 >                     mixins.DestroyModelMixin,
