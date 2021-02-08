@@ -803,7 +803,7 @@ etcd_config:
 
 > 详细配置[传送门](https://grafana.com/docs/loki/latest/configuration/#memberlist_config)
 
-`memberlist_config` 配置`gossip`环，以发现和连接`distributors, ingesters`以及`queriers`. 这个配置在三个组件之间是一个唯一的共享环。
+`memberlist`配置，用以发现和连接`distributors, ingesters`以及`queriers`. 这个配置在三个组件之间是一个唯一的共享环。
 
 ## cache_config
 
@@ -1203,3 +1203,4 @@ Loki各个组件暴露了不同的http端点。在微服务模式下所有组件
 * `GET /prometheus/api/v1/alerts`
 
   兼容Prometheus的端点，列出当前活跃的 alerting。启用同上。
+
