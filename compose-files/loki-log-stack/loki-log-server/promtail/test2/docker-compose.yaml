@@ -1,0 +1,19 @@
+version: "3.8"
+
+
+services:
+
+  promtail:
+    image: grafana/promtail:2.0.0
+    container_name: loki-promtail
+    volumes:
+      # 挂载配置文件
+      - ./config.yaml:/etc/promtail/config.yaml 
+      # 挂载读取的位置文件目录, 视config中指定的/tmp/positions.yaml而定
+      - ./tmp:/tmp 
+      # 挂载日志文件
+      - /data/coconut_api/log:/data/coconut_api/log 
+    ports:
+      - "9080:9080"
+    command: -config.file=/etc/promtail/config.yaml
+    restart: always

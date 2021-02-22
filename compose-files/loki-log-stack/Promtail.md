@@ -83,6 +83,18 @@ clients:
 
 位置文件记录了promtail读取日志内容的位置信息，或者叫偏移`offset`信息，当promtail重启时，会从该文件记录的位置开始继续读取日志内容。
 
+```yaml
+# positions.yaml
+positions:
+  /data/coconut_api/log/archive.log: "0"
+  /data/coconut_api/log/beat.log: "0"
+  /data/coconut_api/log/beat.log.1: "0"
+  /data/coconut_api/log/deamon_task.log: "0"
+  /data/coconut_api/log/face_rec.log: "0"
+  /data/coconut_api/log/in_order.log: "0"
+  /data/coconut_api/log/out_order.log: "0"
+```
+
 ## scrape_configs
 
 抓取配置，这部分配置如何从目标位置抓取、转换日志。是自定义配置的主要内容。

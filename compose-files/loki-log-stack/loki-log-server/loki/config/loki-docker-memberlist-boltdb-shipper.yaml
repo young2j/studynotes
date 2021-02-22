@@ -1,0 +1,148 @@
+auth_enabled: false
+
+http_prefix:
+
+server:
+  http_listen_address: 0.0.0.0
+  grpc_listen_address: 0.0.0.0
+  http_listen_port: 3100
+  grpc_listen_port: 9095
+  log_level: debug
+
+memberlist:
+  join_members: ["loki-1", "loki-2", "loki-3"]
+  dead_node_reclaim_time: 30s
+  gossip_to_dead_nodes_time: 15s
+  left_ingesters_timeout: 30s
+  bind_addr: ['0.0.0.0']
+  bind_port: 7946
+
+ingester:
+  lifecycler:
+    # 当一个ingester退出时，新的ingester在60s后自动交接
+    join_after: 60s
+    observe_period: 5s
+    ring:
+      # 副本因子
+      replication_factor: 2
+      # 哈希环的kv存储
+      kvstore:
+        store: memberlist
+    # ingester退出前的休眠时间，主要用于确保metrics抓取
+    final_sleep: 0s
+  
+  # 当chunk的大小没有达到设定的最大值，如果一直没有任何更新，
+  # 1小时后将强制刷新至store
+  chunk_idle_period: 1h
+  # chunks在内存中最长保存1小时，超过1小时chunk将被刷新至store，然后创建一个新的chunk
+  max_chunk_age: 1h
+  # chunks被刷新后，在内存中继续保存30秒
+  chunk_retain_period: 30s
+  # 采用gzip压缩
+  chunk_encoding: gzip
+  # 每个chunk固定10个block
+  chunk_target_size: 0
+  # 每个block 256kb
+  chunk_block_size: 262144
+  # chunk_target_size: 1.572864e+06
+
+# Only needed for global rate strategy
+# distributor:
+#  ring:
+#    kvstore:
+#      store: memberlist
+
+# 存储架构配置
+schema_config:
+  configs:
+  # index buckets首次创建的日期
+  - from: 2020-08-01
+    # 索引存储采用boltdb-shipper（映射到文件系统的内存键值库）
+    store: boltdb-shipper
+    # chunks存储
+    object_store: filesystem
+    schema: v11
+    index:
+      # 索引表前缀
+      prefix: index_
+      # 索引表的期间
+      period: 24h
+
+# 具体的存储配置
+storage_config:
+  boltdb_shipper:
+    # 共享文件系统存储
+    shared_store: filesystem
+    # index的存储目录
+    active_index_directory: /loki/boltdb-shipper-active
+    # index缓存存储的目录
+    cache_location: /loki/boltdb-shipper-cache
+    # index缓存有效期, 默认24h
+    cache_ttl: 24h
+
+  # chunks刷新后存储的目录地址
+  filesystem:
+    directory: /loki/chunks
+
+
+limits_config:
+  # 每个查询可缓存最近10分钟的结果???
+  # Most recent allowed cacheable result per-tenant
+  max_cache_freshness_per_query: '10m'
+  # 不强制每个样本都带一个metric name
+  enforce_metric_name: false
+  # 拒绝接收旧样本
+  reject_old_samples: true
+  # 拒绝前可接受的最大样本年龄
+  reject_old_samples_max_age: 30m
+  # 每个用户日志数据流引入的速率限制为10mb/s
+  ingestion_rate_mb: 10
+  # 每个用户允许ingester的突发大小
+  ingestion_burst_size_mb: 20
+
+chunk_store_config:
+  # 查询回溯的最大时间限制为一个月内，必须<=table_manager.retention_period
+  max_look_back_period: 720h
+
+table_manager:
+  # 启用 日志保留删除
+  retention_deletes_enabled: true
+  # 日志保留期 3个月
+  retention_period: 2160h
+
+query_range:
+  # make queries more cache-able by aligning them with their step intervals
+  align_queries_with_step: true
+  # request query的最大重试次数
+  max_retries: 5
+  # Split queries by interval 15min and execute in parallel
+  split_queries_by_interval: 15m
+  # Perform query parallelisations based on storage sharding configuration and query ASTs.
+  parallelise_shardable_queries: true
+  # 启用结果缓存
+  cache_results: true
+  # 结果缓存配置
+  results_cache:
+    cache:
+      # We're going to use the in-process "FIFO" cache
+      enable_fifocache: true
+      fifocache:
+        size: 1024
+        validity: 24h
+
+frontend:
+  # Log queries that are slower than the specified duration. Set to 0 to disable.
+  log_queries_longer_than: 5s
+  # 服务器内网ip:port
+  downstream_url: http://10.252.2.29:3100
+  # 响应压缩
+  compress_responses: true
+
+querier:
+  # 两小时以内的查询会先到ingester去查询，超过两小时的直接查询存储后台
+  query_ingesters_within: 2h
+
+# index文件压缩、合并
+compactor:
+  working_directory: /loki/boltdb-shipper-compactor
+  shared_store: filesystem
