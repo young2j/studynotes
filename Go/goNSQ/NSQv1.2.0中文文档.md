@@ -6,7 +6,7 @@
 
 下述步骤将在你的本地机器上运行一个小型**NSQ**集群，贯穿了消息的发布、消费以及归档至磁盘。
 
-1. 首先跟随[安装说明](https://nsq.io/deployment/installing.html)文档进行安装；
+1. 首先跟随[安装说明](https://juejin.cn/post/6932866637519552525/)文档进行安装；
 
 2. 在shell中开启`nsqlookupd`:
 
@@ -432,7 +432,7 @@ SUB: 2014/01/13 16:58:16 duration: 5.251380583s - 36.321mb/s - 190426.114ops/s -
 
 通过标准库，可以轻松地编写网络层和客户端代码。内置内存和 cpu 分析钩子突显了优化机会，并且集成需要很少的精力。我们还发现，在隔离中测试组件、使用接口模拟类型以及迭代构建功能非常容易。
 
-## 内部实现
+## 内部
 
 NSQ 由 3 个守护进程组成：
 
@@ -2091,8 +2091,6 @@ NSQ的重要组成部分是`nsqlookupd`，它为消费者提供发现服务，�
 
 #### 2. 维护 `max_in_flight`
 
-Below is example code in Python to determine whether or not the proposed RDY count is valid for a given connection:
-
 客户端库应为给定的消费者保持最大的传递(`in flight`)消息数上限。具体来说，每个连接的`RDY`计数总和不应超过配置的 `max_in_flight`。
 
 以下是Python中的示例代码，用于确定建议的RDY计数对于给定的连接是否有效：
@@ -2425,10 +2423,6 @@ E_FIN_FAILED
 
 重新排队消息(表明处理失败)
 
-The re-queued message is placed at the tail of the queue, equivalent to having just published it, but for various implementation specific reasons that behavior should not be explicitly relied upon and may change in the future.
-
-Similarly, a message that is in-flight and times out behaves identically to an explicit `REQ`.
-
 重新排队的消息放置在队列的尾部，等价于刚刚发布该消息，但是出于各种实现的特定原因，不应明确依赖此行为，并且将来可能会发生变化。
 
 同样，传输中且超时的消息在行为上与明确的`REQ`相同。
@@ -2506,8 +2500,6 @@ NOP\n
 注意： `nsqd` `v0.2.29+`可用。
 
 如果`IDENTIFY`响应表明 `auth_required=true` ，客户端必须在任何 `SUB`, `PUB` 或`MPUB`之前发送`AUTH`。如果`auth_required`不存在（或为`false`），则客户端不得授权。
-
-When `nsqd` receives an `AUTH` command it delegates responsibility to the configured `--auth-http-address` by performing an HTTP request with client metadata in the form of query parameters: the connection’s remote address, TLS state, and the supplied auth secret. See [AUTH](https://nsq.io/components/nsqd.html) for more details.
 
 当`nsqd`接收到一个`AUTH`命令，它将通过查询参数的形式：连接的远程地址、TLS状态、以及所提供的AUTH密码，执行一个带有客户端元数据的HTTP请求，将责任委托给已配置的`--auth-http-address`  。有关更多详细信息，请参见 [AUTH](https://nsq.io/components/nsqd.html)。
 
@@ -2798,8 +2790,7 @@ docker run nsqio/nsq /nsq_to_file
 
 ### 链接
 
-- [docker
-- [](https://www.docker.com/)
+- [docker](https://www.docker.com/)
 - [`nsq` 镜像](https://registry.hub.docker.com/r/nsqio/nsq/)
 
 ### 运行nsqlookupd
