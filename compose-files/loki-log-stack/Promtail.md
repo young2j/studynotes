@@ -58,25 +58,25 @@ server:
 ```yaml
 clients:
   - url: http://loki:3100/loki/api/v1/push
-  - basic_auth:
-	  username: <string>
-  	password: <string>
-    password_file: <filename>
+    basic_auth:
+	  	username: <string>
+  		password: <string>
+    	password_file: <filename>
 
-  - bearer_token: <secret>
-  - bearer_token_file: <filename>
-  - proxy_url: <string>
+  	bearer_token: <secret>
+  	bearer_token_file: <filename>
+  	proxy_url: <string>
 
-  - tls_config:
-    ca_file: <string>
-    cert_file: <filename>
-    key_file: <filename>
-    server_name: <string>
-    insecure_skip_verify: <boolean> | default = false
+  	tls_config:
+    	ca_file: <string>
+    	cert_file: <filename>
+    	key_file: <filename>
+    	server_name: <string>
+    	insecure_skip_verify: <boolean> | default = false
   
-  - external_labels:
-    <labelname1>: <labelvalue1>
-    <labelname2>: <labelvalue2>
+  	external_labels:
+    	<labelname1>: <labelvalue1>
+    	<labelname2>: <labelvalue2>
 ```
 
 ## positions
@@ -326,25 +326,25 @@ server:
   
 clients:
   - url: http://loki:3100/loki/api/v1/push
-  - basic_auth:
-	  username: <string>
-  	password: <string>
-    password_file: <filename>
+    basic_auth:
+	  	username: <string>
+  		password: <string>
+    	password_file: <filename>
 
-  - bearer_token: <secret>
-  - bearer_token_file: <filename>
-  - proxy_url: <string>
+  	bearer_token: <secret>
+  	bearer_token_file: <filename>
+  	proxy_url: <string>
 
-  - tls_config:
-    ca_file: <string>
-    cert_file: <filename>
-    key_file: <filename>
-    server_name: <string>
-    insecure_skip_verify: <boolean> | default = false
+  	tls_config:
+    	ca_file: <string>
+    	cert_file: <filename>
+    	key_file: <filename>
+    	server_name: <string>
+    	insecure_skip_verify: <boolean> | default = false
   
-  - external_labels:
-    <labelname1>: <labelvalue1>
-    <labelname2>: <labelvalue2>
+  	external_labels:
+    	<labelname1>: <labelvalue1>
+    	<labelname2>: <labelvalue2>
 
 positions:
   filename: /tmp/positions.yaml
