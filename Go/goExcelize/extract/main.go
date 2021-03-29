@@ -84,7 +84,7 @@ func InputDateRange() (time.Time, time.Time, string) {
 	reader := bufio.NewReader(os.Stdin)
 
 	for {
-		fmt.Println("请输入数据文目录(例如D:/files/data):")
+		fmt.Println("请输入数据文件目录(例如D:/files/data):")
 		dataPath, _ := reader.ReadString('\n')
 		dataPath = strings.ReplaceAll(strings.TrimSpace(dataPath), "\\", "/")
 		dataPath = strings.Trim(dataPath, "\"")

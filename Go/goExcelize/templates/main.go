@@ -8,7 +8,7 @@ import (
 )
 
 // GenSheets 生成模板工作表
-func GenSheets() *excelize.File {
+func GenSheets(resultBookName string) *excelize.File {
 	f := excelize.NewFile()
 	_ = f.NewSheet(constants.PlanSheetName)
 	_ = f.NewSheet(constants.ExecSheetName)
@@ -93,7 +93,7 @@ func GenSheets() *excelize.File {
 		fmt.Println(err)
 	}
 
-	if err = f.SaveAs(constants.ResultFileName); err != nil {
+	if err = f.SaveAs(resultBookName); err != nil {
 		fmt.Println(err)
 	}
 	return f

@@ -6,10 +6,13 @@ import (
 	"log"
 	"os"
 	"path"
+
+	"strings"
 	"sync"
 	"time"
 	"xiaolan/constants"
 	"xiaolan/extract"
+
 	"xiaolan/templates"
 
 	"github.com/360EntSecGroup-Skylar/excelize/v2"
@@ -17,6 +20,32 @@ import (
 
 // var wg sync.WaitGroup
 var wg sync.WaitGroup
+
+func recursiveXlsFiles(dataPath string) []string {
+	xlsFiles := make([]string, 0)
+	fileInfo, err := os.Stat(dataPath)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	if fileInfo.IsDir() {
+		fileInfos, err := ioutil.ReadDir(dataPath)
+		if err != nil {
+			fmt.Println(err)
+		}
+
+		for _, file := range fileInfos {
+			if file.IsDir() {
+				xlsFiles = append(xlsFiles, recursiveXlsFiles(path.Join(dataPath, file.Name()))...)
+			} else {
+				filePath := path.Join(dataPath, file.Name())
+				xlsFiles = append(xlsFiles, filePath)
+			}
+		}
+	}
+
+	return xlsFiles
+}
 
 func rwPlanSheetResult(p Params) {
 	defer wg.Done()
@@ -73,60 +102,71 @@ func main() {
 
 	fmt.Println(str)
 
-	dateStart, dateEnd, dataPath := extract.InputDateRange()
-	start := time.Now()
-	
-	
-	log.Println("开始提取数据......")
-	targetFile := template.GenSheets()
-	log.Println("生成模板文件......")
+	goOn := true
 
-	if dataPath == "" {
+	for goOn {
+		dateStart, dateEnd, dataPath := extract.InputDateRange()
+		if dataPath == "" {
+			pwd, _ := os.Getwd()
+			dataPath = path.Join(pwd, "data")
+		}
+
+		start := time.Now()
+		resultBookName := path.Base(dataPath) + "_" + constants.ResultFileName
+
+		log.Println("开始提取数据......")
+		targetFile := template.GenSheets(resultBookName)
+		log.Println("生成模板文件......")
+
+		files := recursiveXlsFiles(dataPath)
+
+		count1 := 0
+		count2 := 0
+		for _, file := range files {
+			log.Printf("开始处理【%v】\n", file)
+			sourceFile := extract.GetWb(file)
+
+			p1 := Params{
+				sourceFile: sourceFile,
+				targetFile: targetFile,
+				count:      &count1,
+				wb:         file,
+			}
+			p2 := Params{
+				sourceFile: sourceFile,
+				targetFile: targetFile,
+				count:      &count2,
+				wb:         file,
+				dateStart:  dateStart,
+				datEnd:     dateEnd,
+			}
+
+			wg.Add(2)
+			go rwPlanSheetResult(p1)
+			go rwExecSheetResult(p2)
+		}
+
+		wg.Wait()
+
+		err := targetFile.SaveAs(resultBookName)
+		if err != nil {
+			log.Fatalln(err)
+		}
+		end := time.Now()
+		elapsed := end.Sub(start).Seconds()
+
+		fmt.Println("----------------------------------------------------------------------------")
+		log.Printf("提取完成. 总计耗时: %v秒\n", elapsed)
 		pwd, _ := os.Getwd()
-		dataPath = path.Join(pwd, "/data")
-	}
+		log.Printf("结果文件: %v\n", pwd+"\\"+resultBookName)
+		fmt.Println("----------------------------------------------------------------------------")
 
-	workbooks, err := ioutil.ReadDir(dataPath)
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	count1 := 0
-	count2 := 0
-	for _, file := range workbooks {
-		wb := path.Join(dataPath, file.Name())
-		log.Printf("开始处理【%v】\n", wb)
-		sourceFile := extract.GetWb(wb)
-
-		p1 := Params{
-			sourceFile: sourceFile,
-			targetFile: targetFile,
-			count:      &count1,
-			wb:         wb,
+		goOn = false
+		var input string
+		fmt.Println("是否继续？[y/n]")
+		fmt.Scanln(&input)
+		if strings.TrimSpace(strings.ToLower(input)) == "y" {
+			goOn = true
 		}
-		p2 := Params{
-			sourceFile: sourceFile,
-			targetFile: targetFile,
-			count:      &count2,
-			wb:         wb,
-			dateStart:  dateStart,
-			datEnd:     dateEnd,
-		}
-
-		wg.Add(2)
-		go rwPlanSheetResult(p1)
-		go rwExecSheetResult(p2)
 	}
-
-	wg.Wait()
-
-	err = targetFile.SaveAs(constants.ResultFileName)
-	if err != nil {
-		log.Fatalln(err)
-	}
-
-	end := time.Now()
-	elapsed := end.Sub(start).Seconds()
-
-	log.Printf("task done. elpased: %vs\n", elapsed)
 }
