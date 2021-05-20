@@ -5,6 +5,9 @@ python -m django --version
 ```
 
 ```bash
+mkdir macaws
+django-admin startproject main macaws
+
 django-admin startproject demosite
 demosite
 ├── manage.py
