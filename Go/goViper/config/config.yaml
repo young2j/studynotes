@@ -1,0 +1,21 @@
+version: '3.5'
+services:
+  dev:
+    image: hub.qixincha.com/macaw:latest
+    command: python3 manage.py runserver 0.0.0.0:8530
+    volumes:
+      - .:/code
+    ports:
+      - 8530:8530
+    extra_hosts:
+      - 'prerender.qixincha.com:193.112.173.62'
+    network_mode: bridge
+    environment:
+      - TZ=Asia/Shanghai
+    sysctls:
+      net.core.somaxconn: 16384
+    links:
+      - 'chrome:chrome'
+    depends_on:
+      - chrome
+
