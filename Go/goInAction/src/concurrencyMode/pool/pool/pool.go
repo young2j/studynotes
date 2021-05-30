@@ -5,44 +5,43 @@ package pool
 
 import (
 	"errors"
-	"log"
 	"io"
+	"log"
 	"sync"
 )
 
 //共享资源池。被管理的资源必须实现io.Closer
 type Pool struct {
-	m 			sync.Mutex
-	resources 	chan io.Closer
-	factory		func() (io.Closer,error)
-	closed 		bool
+	m         sync.Mutex
+	resources chan io.Closer
+	factory   func() (io.Closer, error)
+	closed    bool
 }
 
 var ErrPoolClolsed = errors.New("Pool has been closed.")
 
 //constructor
-func New(fn func()(io.Closer,error), size uint) (*Pool,error) {
-	if size<=0{
-		return nil,errors.New("size value too small.")
+func New(fn func() (io.Closer, error), size uint) (*Pool, error) {
+	if size <= 0 {
+		return nil, errors.New("size value too small.")
 	}
 
 	return &Pool{
-		factory: fn,
-		resources: make(chan io.Closer,size),
-	},nil
+		factory:   fn,
+		resources: make(chan io.Closer, size),
+	}, nil
 }
 
-
 //从 Pool中请求一个资源
-func (p *Pool) Acquire() (io.Closer,error) {
-	select{
-		//检查是否有空闲资源
-	case r,ok := <- p.resources:
+func (p *Pool) Acquire() (io.Closer, error) {
+	select {
+	//检查是否有空闲资源
+	case r, ok := <-p.resources:
 		log.Println("Acquire: Shared Resources.")
 		if !ok {
-			return nil,ErrPoolClolsed
+			return nil, ErrPoolClolsed
 		}
-		return r,nil
+		return r, nil
 		//无空闲资源，则请求新资源
 	default:
 		log.Println("Acquire: New Resources.")
@@ -51,7 +50,7 @@ func (p *Pool) Acquire() (io.Closer,error) {
 }
 
 //将使用后的资源放回Pool
-func (p *Pool) Release(r io.Closer)  {
+func (p *Pool) Release(r io.Closer) {
 	//保证本操作和close操作的安全
 	p.m.Lock()
 	defer p.m.Unlock()
@@ -63,21 +62,21 @@ func (p *Pool) Release(r io.Closer)  {
 	}
 
 	select {
-		//资源放回队列
-		case p.resources <- r:
-			log.Println("Release: In Queue.")
-		default:
-			log.Println("Release: Closing")
-			r.Close()
+	//资源放回队列
+	case p.resources <- r:
+		log.Println("Release: In Queue.")
+	default:
+		log.Println("Release: Closing")
+		r.Close()
 	}
 }
 
 //关闭Pool
-func (p *Pool) Close()  {
+func (p *Pool) Close() {
 	p.m.Lock()
 	defer p.m.Unlock()
 
-	if p.closed{
+	if p.closed {
 		return
 	}
 
@@ -85,7 +84,7 @@ func (p *Pool) Close()  {
 
 	close(p.resources) //清空通道资源前，先关闭通道，否则会发生死锁
 
-	for r:= range p.resources{
+	for r := range p.resources {
 		r.Close()
 	}
 }

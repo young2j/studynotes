@@ -3,7 +3,7 @@ work：
 	使用无缓冲通道并发控制一组工作
 */
 
-package work
+package worker
 
 import (
 	"sync"
@@ -17,7 +17,7 @@ type Worker interface {
 //pool提供一个goroutine池，可以完成任意提交的Worker任务
 type Pool struct {
 	work chan Worker
-	wg sync.WaitGroup
+	wg   sync.WaitGroup
 }
 
 func New(maxGoroutines int) *Pool {
@@ -26,18 +26,17 @@ func New(maxGoroutines int) *Pool {
 	}
 	p.wg.Add(maxGoroutines)
 
-	for i:=0;i<maxGoroutines;i++{
-		go func ()  {
-			for w:=range p.work {
+	for i := 0; i < maxGoroutines; i++ {
+		go func() {
+			for w := range p.work {
 				w.Task()
 			}
-			p.wg.Done()	
+			p.wg.Done()
 		}()
 	}
 
 	return &p
 }
-
 
 //提交工作到工作池
 func (p *Pool) Run(w Worker) {

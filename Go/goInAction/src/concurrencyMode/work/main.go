@@ -4,10 +4,10 @@ import (
 	"log"
 	"sync"
 	"time"
-	"concurrencyMode/work"
+	"work/worker"
 )
 
-var names = []string {
+var names = []string{
 	"xiaoMing",
 	"xiaoHong",
 	"xiaoWang",
@@ -15,29 +15,28 @@ var names = []string {
 	"xiaoYang",
 }
 
-type namePrinter struct{
+type namePrinter struct {
 	name string
 }
 
-
 //implement Task interface
-func (np *namePrinter) Task()  {
+func (np *namePrinter) Task() {
 	log.Println(np.name)
 	time.Sleep(time.Second)
 }
 
-func main(){
-	p:=work.New(2) 
+func main() {
+	p := worker.New(2)
 
 	var wg sync.WaitGroup
-	wg.Add(100*len(names))
+	wg.Add(100 * len(names))
 
-	for i:=0;i<100;i++{
-		for _,name := range names{
-			np:=namePrinter{
-				name:name,
+	for i := 0; i < 100; i++ {
+		for _, name := range names {
+			np := namePrinter{
+				name: name,
 			}
-			go func ()  {
+			go func() {
 				p.Run(&np)
 				wg.Done()
 			}()
@@ -48,4 +47,3 @@ func main(){
 
 	p.Shutdown()
 }
-

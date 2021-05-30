@@ -4,7 +4,7 @@ import (
 	"log"
 	"time"
 	"os"
-	"concurrencyMode/runner"
+	"runner/runner"
 )
 
 
