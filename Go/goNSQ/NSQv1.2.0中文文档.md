@@ -679,7 +679,7 @@ NSQ TCP协议是面向推送的。连接，握手和订阅后，消费者将处�
 
 [`sync`](https://golang.org/pkg/sync/)包提供了[`sync.WaitGroup`](https://golang.org/pkg/sync/#WaitGroup)，可用于执行实时goroutine计数（并提供一种等待它们退出的方法）。
 
-为了减少典型的样板(`boilerplate`)代码，**nsqd**使用了以下包装：
+为了减少典型的样板(`boilerplate`)代码，**nsqd**使用了以下包装： 
 
 ```go
 type WaitGroupWrapper struct {
