@@ -5,6 +5,12 @@
 # See documentation in:
 # https://doc.scrapy.org/en/latest/topics/spider-middleware.html
 
+import random
+import json
+from scrapy.downloadermiddlewares.httpproxy import HttpProxyMiddleware
+from collections import defaultdict
+from scrapy.downloadermiddlewares.cookies import CookiesMiddleware
+import browsercookie
 from scrapy import signals
 
 
@@ -103,16 +109,13 @@ class ExampleDownloaderMiddleware(object):
         spider.logger.info('Spider opened: %s' % spider.name)
 
 
-import browsercookie
-from scrapy.downloadermiddlewares.cookies import CookiesMiddleware
-
 class BrowserCookiesMiddleware(CookiesMiddleware):
-    def __init__(self,debug=False):
+    def __init__(self, debug=False):
         super().__init__(debug)
         self.load_browser_cookies()
-   
+
     def load_browser_cookies(self):
-        jar = self.jars['chrome'] 
+        jar = self.jars['chrome']
         chrome_cookiejar = browsercookie.chrome()
         for cookie in chrome_cookiejar:
             jar.set_cookie(cookie)
@@ -122,12 +125,9 @@ class BrowserCookiesMiddleware(CookiesMiddleware):
         # for cookie in firefox_cookiejar:
         #     jar.set_cookie(cookie)
 
-from scrapy.downloadermiddlewares.httpproxy import HttpProxyMiddleware
-from collections import defaultdict
-import json,random
 
 class RandomHttpProxyMiddleware(HttpProxyMiddleware):
-    def __init__(self,auth_encoding='latin-1',proxy_list_file=None):
+    def __init__(self, auth_encoding='latin-1', proxy_list_file=None):
         if not proxy_list_file:
             raise 'NotConfigured'
 
@@ -142,13 +142,14 @@ class RandomHttpProxyMiddleware(HttpProxyMiddleware):
                 self.proxies[scheme].append(self._get_proxy(url, scheme))
 
     @classmethod
-    def from_crawler(cls,crawler):
-        auth_encoding = crawler.settings.get('HTTPPROXY_AUTH_ENCODING','latin-1')
+    def from_crawler(cls, crawler):
+        auth_encoding = crawler.settings.get(
+            'HTTPPROXY_AUTH_ENCODING', 'latin-1')
         proxy_list_file = crawler.settings.get('HTTPPROXY_PROXY_LIST_FILE')
-        return cls(auth_encoding,proxy_list_file)
+        return cls(auth_encoding, proxy_list_file)
 
-    def __set__proxy(self,request,scheme):
-        creds,proxy = random.choice(self.proxies[scheme])
-        request.meta['proxy'] = proxy 
+    def __set__proxy(self, request, scheme):
+        creds, proxy = random.choice(self.proxies[scheme])
+        request.meta['proxy'] = proxy
         if creds:
             request.headers['Proxy-Authorization'] = b'Basic' + creds

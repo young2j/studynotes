@@ -5,17 +5,18 @@
 # @Link    : http://example.org
 # @Version : $Id$
 
-import scrapy,json
+import scrapy
+import json
 from scrapy import Request
 
+
 class TestRandomProxySpider(scrapy.Spider):
-	name = 'test_random_proxy'
+    name = 'test_random_proxy'
 
-	def start_requests(self):
-		for _ in range(100): # 循环100次,但并不关心循环的变量,_代替
-			yield Request('http://httpbin.org/ip',dont_filter=True)
-			yield Request('https://httpbin.org/ip',dont_filter=True)
+    def start_requests(self):
+        for _ in range(100):  # 循环100次,但并不关心循环的变量,_代替
+            yield Request('http://httpbin.org/ip', dont_filter=True)
+            yield Request('https://httpbin.org/ip', dont_filter=True)
 
-	def parse(self,response):
-		print(json.loads(response.text))
-		
+    def parse(self, response):
+        print(json.loads(response.text))

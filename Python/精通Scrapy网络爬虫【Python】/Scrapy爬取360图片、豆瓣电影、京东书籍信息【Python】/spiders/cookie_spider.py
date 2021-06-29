@@ -1,15 +1,17 @@
 # -*- coding: utf-8 -*-
 
-import scrapy 
+import scrapy
+
 
 class CookieSpider(scrapy.Spider):
-	name = 'cookie'
-	url = 'https://passport.etest.net.cn/Manage/Index?see=1'
+    name = 'cookie'
+    url = 'https://passport.etest.net.cn/Manage/Index?see=1'
 
-	def start_requests(self):
-		yield scrapy.Request(self.url,meta={'cookiejar':'chrome'})
-	def parse(self,response):
-		myname = response.css('div.input_sub1::text').extract()
-		yield myname 
+    def start_requests(self):
+        yield scrapy.Request(self.url, meta={'cookiejar': 'chrome'})
 
-#。。。。。。。。。实践失败。。。。。。。。。。。
+    def parse(self, response):
+        myname = response.css('div.input_sub1::text').extract()
+        yield myname
+
+# 。。。。。。。。。实践失败。。。。。。。。。。。
