@@ -29,19 +29,19 @@ func main() {
 	p := worker.New(2)
 
 	var wg sync.WaitGroup
-	wg.Add(100 * len(names))
+	wg.Add(len(names))
 
-	for i := 0; i < 100; i++ {
+	// for i := 0; i < 100; i++ {
 		for _, name := range names {
-			np := namePrinter{
+			np := &namePrinter{
 				name: name,
 			}
 			go func() {
-				p.Run(&np)
+				p.Run(np)
 				wg.Done()
 			}()
 		}
-	}
+	// }
 
 	wg.Wait()
 
