@@ -1,0 +1,13 @@
+Name: check.rpc
+ListenOn: 127.0.0.1:8081
+Etcd:
+  Hosts:
+  - 127.0.0.1:2379
+  Key: check.rpc
+
+
+DataSource: root:rootroot@tcp(localhost:3306)/gozero
+Table: book
+# 可以使用多个redis作为cache，支持redis单点或者redis集群
+Cache:
+  - Host: localhost:6381
