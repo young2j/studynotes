@@ -1,0 +1,110 @@
+version: '3.5'
+services:
+  ndb-mgmd:
+    image: registry.cn-chengdu.aliyuncs.com/yangsj/ndb-cluster:latest
+    container_name: ndb-mgmd
+    # command: ndb_mgmd --initial -f /etc/config.ini --ndb-nodeid=1
+    command: tail -f /usr/local/mysql/mysql-cluster/data/ndb_1_cluster.log
+    privileged: true
+    restart: always
+    volumes:
+      - ./conf/my.cnf:/etc/my.cnf
+      - ./conf/config.ini:/etc/config.ini
+      - ./logs/ndb_1_cluster.log:/usr/local/mysql/mysql-cluster/data/ndb_1_cluster.log
+    ports:
+      - 2202:1186
+    networks:
+      mysqlcluster:
+        ipv4_address: 172.28.0.2
+    sysctls:
+      net.core.somaxconn: 16384
+
+  ndb-ndbd1:
+    image: registry.cn-chengdu.aliyuncs.com/yangsj/ndb-cluster:latest
+    container_name: ndb-ndbd1
+    # command: ndbd
+    command: tail -f /usr/local/mysql/mysql-cluster/data/ndb_2_out.log
+    privileged: true
+    restart: always
+    volumes:
+      - ./conf/my.cnf:/etc/my.cnf
+      - ./conf/config.ini:/etc/config.ini
+      - ./logs/ndb_2_out.log:/usr/local/mysql/mysql-cluster/data/ndb_2_out.log
+    depends_on:
+      - ndb-mgmd
+    ports:
+      - 1186:1186
+    networks:
+      mysqlcluster:
+        ipv4_address: 172.28.0.3
+    sysctls:
+      net.core.somaxconn: 16384
+
+  ndb-ndbd2:
+    image: registry.cn-chengdu.aliyuncs.com/yangsj/ndb-cluster:latest
+    container_name: ndb-ndbd2
+    # command: ndbd
+    command: tail -f /usr/local/mysql/mysql-cluster/data/ndb_3_out.log
+    privileged: true
+    restart: always
+    volumes:
+      - ./conf/my.cnf:/etc/my.cnf
+      - ./conf/config.ini:/etc/config.ini
+      - ./logs/ndb_3_out.log:/usr/local/mysql/mysql-cluster/data/ndb_3_out.log
+    depends_on:
+      - ndb-mgmd
+    ports:
+      - 1187:1186
+    networks:
+      mysqlcluster:
+        ipv4_address: 172.28.0.4
+    sysctls:
+      net.core.somaxconn: 16384
+
+  ndb-sqld:
+    image: registry.cn-chengdu.aliyuncs.com/yangsj/ndb-cluster:latest
+    container_name: ndb-sqld
+    command: mysqld_safe --user=root
+    privileged: true
+    restart: always
+    ports:
+      - 3305:3306
+    volumes:
+      - ./conf/my.cnf:/etc/my.cnf
+      - ./conf/config.ini:/etc/config.ini
+    environment:
+      MYSQL_ROOT_PASSWORD: rootroot
+      MYSQL_DATABASE: macaw
+      MYSQL_USER: root
+      MYSQL_PASSWORD: rootroot
+      MYSQL_ROOT_HOST: '%'
+    depends_on:
+      - ndb-mgmd
+      - ndb-ndbd1
+      - ndb-ndbd2
+    networks:
+      mysqlcluster:
+        ipv4_address: 172.28.0.5
+    sysctls:
+      net.core.somaxconn: 16384
+
+networks:
+  mysqlcluster:
+    #  driver: overlay
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.0.0/16
+          # gateway: 172.28.5.254 # only for v2
+# docker run -it --rm -v "$PWD/conf/my.cnf:/etc/my.cnf" -v "$PWD/conf/config.ini:/etc/config.ini" --net=docker_mysqlcluster ndb-cluster bash
+
+# docker network create --driver=bridge --subnet=172.28.0.0/16 docker_mysqlcluster
+# docker run -it --name=ndb-mgmd -v "$PWD/conf/my.cnf:/etc/my.cnf" -v "$PWD/conf/config.ini:/etc/config.ini" --net=docker_mysqlcluster --ip=172.28.0.2 -p 2202:1186 ndb-cluster bash
+# ndb_mgmd --initial -f /etc/config.ini
+# ctrl+p -> ctrl+q
+
+
+# ALTER USER user() IDENTIFIED BY 'rootroot';
+# use mysql;
+# update user set host = '%' where user = 'root';
+# flush privileges;
