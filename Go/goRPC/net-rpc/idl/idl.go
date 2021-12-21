@@ -2,27 +2,26 @@ package idl
 
 import "errors"
 
-// Args ...
+// 入参
 type Args struct {
 	A, B int
 }
 
-//Return ...
+// 出参
 type Return struct {
 	Quo, Rem int
 }
 
-// Arith ...
+// 主体-用于实现方法，或者叫过程
 type Arith int
 
-
-// Multiply ...
+// Arith.Multiply
 func (a *Arith) Multiply(args *Args, reply *int) error {
 	*reply = args.A * args.B
 	return nil
 }
 
-// Divide ...
+// Arith.Divide
 func (a *Arith) Divide(args *Args, ret *Return) error {
 	if args.B == 0 {
 		return errors.New("divide by zero")
