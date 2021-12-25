@@ -1,0 +1,12 @@
+{
+  "name": "state-pattern",
+  "version": "1.0.0",
+  "description": "nodejs state pattern demo",
+  "main": "index.js",
+  "author": "ysj",
+  "license": "MIT",
+  "type": "commonjs",
+  "scripts": {
+    "main": "tsc -p ./tsconfig.json && node build/index.js"
+  }
+}

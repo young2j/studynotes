@@ -1,0 +1,12 @@
+{
+  "name": "abstract-factory",
+  "version": "1.0.0",
+  "description": "nodejs abstract factory demo",
+  "main": "index.js",
+  "author": "ysj",
+  "license": "MIT",
+  "type": "commonjs",
+  "scripts": {
+    "main": "tsc -p ./tsconfig.json && node build/index.js"
+  }
+}

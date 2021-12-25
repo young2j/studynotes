@@ -1,0 +1,12 @@
+{
+  "name": "simple-factory",
+  "version": "1.0.0",
+  "description": "nodejs simple factory demo",
+  "main": "index.js",
+  "author": "ysj",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "main": "tsc index.ts --outFile build/main.js && node build/main.js"
+  }
+}
