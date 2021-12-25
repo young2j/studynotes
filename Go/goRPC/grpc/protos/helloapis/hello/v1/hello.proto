@@ -1,0 +1,80 @@
+syntax = "proto3";  // 指定proto2、proto3
+package hello.v1; // 指定包名
+// option go_package = ".;hello"; 
+option go_package = "grpc-notes/protos/helloapis/hello/v1;hellov1"; 
+// option java_package = "hello";
+
+// 可以使用import语句导入其它proto文件
+// import "others.proto";
+// import alias "others.proto";
+import "google/protobuf/timestamp.proto";
+import "validate/validate.proto";
+
+// ------------定义RPC服务接口service--------------
+// 1. protocol buffer编译器会根据所选择的不同语言生成对应的服务接口代码
+// 2. 接口方法需要定义请求参数HelloRequest以及返回参数HelloResponse
+service HelloService {  // service 采用驼峰命名 
+    rpc SayHello(SayHelloRequest) returns(SayHelloResponse){}
+}
+
+
+//--------------定义请求和响应Message---------------
+message SayHelloRequest { // message 采用首字母大写驼峰命名
+ // 字段命名规则：修饰符 类型 名称(小写+下划线) = 字段编号或默认值;
+    //-- 修饰符：
+        // required : proto2
+        // optional : proto2
+        // repeated : proto2/proto3
+    //-- 字段编号：
+        // 有了该值，通信双方才能互相识别对方的字段，相同的编码值，其限定修饰符和数据类型必须相同，编码值的取值范围为 1~2^29-1(536870911)
+        // 其中 1~15的编码时间和空间效率都是最高的，编码值越大，其编码的时间和空间效率就越低，所以建议把经常要传递的值把其字段编码设置为1-15之间的值
+        //  19000~19999 编码值为Google protobuf 系统内部保留值，建议不要在自己的项目中使用
+    //-- 字段默认值：
+        // 当在传递数据时，对于required数据类型，如果用户没有设置值，则使用默认值传递到对端
+   int32   age = 1;      // 必须字段
+   optional int64   count = 2;    // 可选字段
+   repeated float   score = 3; // 重复字段 也是可选的,但可以包含多个值,可看作是在传递一个数组的值, 规范为使用复数
+    double  money = 4;   
+    string  name = 5;
+    bool    fat = 6;
+    bytes   char = 7;
+  
+    // 定义枚举型：规范为采用驼峰命名，字段使用 枚举名前缀_全大写_加下划线命名, 必须有0号字段，为默认值
+    enum Status {
+        STATUS_OK_UNSPECIFIED = 0;
+        STATUS_FAIL = 1;
+    }
+    Status status = 8;
+    
+    // 可以任意嵌套message 定义在内外都可以, 但内部声明的message只可在内部直接使用
+    message NestMessage {
+        bool is_nest = 1;
+    }
+    NestMessage nest_message = 9;
+    
+    // 定义map 类型, k,v 也可以是定义的message类型, 不能为repeated
+    map<string, int32> map_field = 10;
+
+    // 可以使用包名+消息名的方式来使用类型
+    // others.foo.Bar from_other = 11;
+
+    // oneof 最多可以同时设置一个字段, 设置 oneof 的任何成员会自动清除所有其他成员
+    oneof result {
+        string result_a = 12;
+        int32 result_b = 13;
+        google.protobuf.Timestamp result_c = 14;
+    }
+    // 保留字段名和字段号, 将不能使用
+    reserved 20, 21;
+    reserved "field_name";
+}
+
+message SayHelloResponse {
+    string code = 1;
+    message Data {
+        int32 age = 1;
+        string name = 2;
+        double money = 3;
+    }
+    Data data = 2;
+} 

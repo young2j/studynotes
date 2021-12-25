@@ -1,0 +1,13 @@
+type: google.api.Service
+config_version: 3
+
+http:
+  rules:
+    - selector: gateway.v1.ProbeService.Ping
+      post: /v1/probe/ping
+      body: "*"
+
+
+
+
+

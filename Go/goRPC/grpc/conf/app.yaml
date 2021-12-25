@@ -1,0 +1,19 @@
+dev:
+  SqlURL: root:rootroot@tcp(10.9.155.114:3308)/macaw?charset=utf8mb4&parseTime=True&loc=Local
+  RedisURL: redis://:@10.9.155.114:6381/1
+  MongoURL: mongodb://10.9.155.114:27017
+  RabbitURL: amqp://guest:guest@localhost:5672/
+  JaegerCollectorURL: http://localhost:14268/api/traces
+  JaegerAgentURL: http://localhost:6831
+
+test:
+  SqlURL: root:Hahaha666@tcp(10.28.16.36:3306)/macaw?charset=utf8mb4&parseTime=True&loc=Local
+  RedisURL: redis://:@10.28.16.36:6379/0
+  MongoURL: mongodb://10.28.16.36:27017
+  RabbitURL: amqp://test-parrot:HeyMan666@10.28.16.36:5672/
+
+prod:
+  SqlURL: macaw:cT!by-h+GCPb4-7@tcp(10.28.16.30:3306)/macaw?charset=utf8mb4&parseTime=True&loc=Local
+  RedisURL: redis://:KsanquanRedis!1@10.28.16.16:6379/1
+  MongoURL: mongodb://10.28.0.8:27000,10.28.0.9:27000,10.28.0.10:27000
+  RabbitURL: amqp://parrot:RDzZv0fCeV5K68xa@10.28.0.17:5672/

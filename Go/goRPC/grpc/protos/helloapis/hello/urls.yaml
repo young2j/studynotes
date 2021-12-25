@@ -1,0 +1,11 @@
+type: google.api.Service
+config_version: 3
+
+http:
+  # https://github.com/googleapis/googleapis/blob/master/google/api/http.proto for details
+  rules:
+    - selector: hello.v1.HelloService.SayHello
+      post: /v1/hello/sayhello
+      body: '*'
+      additional_bindings:
+        - get: /v1/hello/sayhello/{name}

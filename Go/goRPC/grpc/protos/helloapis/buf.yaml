@@ -1,0 +1,28 @@
+version: v1
+breaking:
+  use:
+    - FILE
+lint:
+  use:
+    - DEFAULT
+  # # 添加lint排除规则, 不推荐
+  # except:
+  #   - PACKAGE_VERSION_SUFFIX
+  #   - FIELD_LOWER_SNAKE_CASE
+  #   - SERVICE_SUFFIX
+  
+  ## 允许使用注释忽视lint
+  # allow_comment_ignores: true
+  
+  ## 忽略第三方proto文件lint
+  # ignore:
+  #   - google/type/datetime.proto
+
+# 如果在.proto文件中，import了外部模块，需要添加模块依赖
+# deps:
+#   - buf.build/googleapis/googleapis
+
+# 可以添加build排除项
+# build:
+#   excludes:
+#     - hello/v1

@@ -1,0 +1,49 @@
+syntax = "proto3";
+package jwt.v1;
+
+option go_package = "grpc-notes/protos/userapis/jwt/v1;jwtv1"; 
+
+import "google/api/annotations.proto";
+import "validate/validate.proto";
+import "openapiv2/annotations.proto";
+
+// swagger 配置
+option (openapiv2.openapiv2_swagger) = {
+	info: {
+		title: "SWAGGER API 文档";
+		version: "v1.0";
+	};
+};
+
+
+service JWTService {
+    rpc GetToken (GetTokenRequest) returns (GetTokenResponse){
+        option (google.api.http) = {
+            get:"/auth/v1/jwt/get_token"
+        };
+    };
+    rpc RefreshToken (RefreshTokenRequest) returns (RefreshTokenResponse){
+        option (google.api.http) = {
+            get:"/auth/v1/jwt/refresh_token"
+        };
+    };
+}
+
+message GetTokenRequest {
+    string ticket=1;
+}
+
+message GetTokenResponse {
+    string token=1;
+}
+
+message RefreshTokenRequest {
+    string token=1;
+}
+message RefreshTokenResponse {
+    string token=1;
+}
+
+
+
+

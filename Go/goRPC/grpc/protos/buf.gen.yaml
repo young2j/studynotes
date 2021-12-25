@@ -1,0 +1,43 @@
+version: v1
+plugins:
+  - name: go
+    out: gen/go
+    opt: paths=source_relative
+  - name: go-grpc
+    out: gen/go
+    opt:
+      - paths=source_relative
+      - require_unimplemented_servers=false
+
+  # $ yarn global add grpc-tools
+  - name: js
+    out: gen/js
+    opt: import_style=commonjs,binary
+  - name: js-grpc
+    out: gen/js
+    opt: import_style=commonjs,binary
+    path: /usr/local/bin/grpc_tools_node_protoc_plugin
+
+  - name: grpc-gateway
+    out: gen/go
+    opt:
+      - paths=source_relative
+      - logtostderr=true
+      - generate_unbound_methods=true
+      # - grpc_api_configuration=helloapis/hello/urls.yaml
+      # - grpc_api_configuration=gatewayapis/gateway/urls.yaml
+      # - standalone=true
+  
+  - name: openapiv2
+    out: gen/swagger
+    strategy: all
+    opt: allow_merge=true,merge_file_name=apis
+      # - grpc_api_configuration=helloapis/hello/urls.yaml
+      # - grpc_api_configuration=gatewayapis/gateway/urls.yaml
+
+
+  - name: validate
+    out: gen/go
+    opt:
+      - lang=go
+      - paths=source_relative
