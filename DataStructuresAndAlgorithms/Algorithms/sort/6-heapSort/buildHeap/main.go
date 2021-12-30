@@ -102,7 +102,7 @@ func buildMaxHeapFromBottom2Top(arr []int) {
 			}
 			// 如果最大数为子节点之一，则子节点上浮
 			utils.Swap(arr, p, largest)
-			// 以largest为下次循环的父节点
+			// 以largest为下次循环的父节点，往下游走，让小数继续下沉
 			p = largest
 			// 计算其左子节点，继续循环
 			left = p*2 + 1
@@ -125,23 +125,23 @@ func buildMinHeapFromBottom2Top(arr []int) {
 		p := i
 		left := (2*p + 1)
 		for left < len(arr) {
-			// 找左右子节点最大者：存在右子节点、且右子节点较大
+			// 找左右子节点最小者：存在右子节点、且右子节点较小
 			smallest := left
 			if (left+1) < len(arr) && arr[left] > arr[left+1] {
 				smallest = left + 1
 			}
-			// 找较大子节点与父节点中的最大者
+			// 找较小子节点与父节点中的最小者
 			if arr[p] < arr[smallest] {
 				smallest = p
 			}
 
-			// 如果最大数为父节点, 则停止，无需上浮下沉
+			// 如果最小数为父节点, 则停止，无需上浮下沉
 			if smallest == p {
 				break
 			}
-			// 如果最大数为子节点之一，则子节点上浮
+			// 如果最小数为子节点之一，则子节点上浮
 			utils.Swap(arr, p, smallest)
-			// 以smallest为下次循环的父节点
+			// 以smallest为下次循环的父节点，往下游走，让大数下沉到底
 			p = smallest
 			// 计算其左子节点，继续循环
 			left = p*2 + 1
