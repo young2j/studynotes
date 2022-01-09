@@ -9,12 +9,12 @@ package main
 import "fmt"
 
 type Trier interface {
-	Insert(value string)                    // 插入一个值
-	Search(value string) (int, bool)        // 查找值，看是否存在，如存在，返回添加了几次
+	Insert(word string)                    // 插入一个值
+	Search(word string) (int, bool)        // 查找值，看是否存在，如存在，返回添加了几次
 	StartsWith(prefix string) (int, bool)   // 前缀匹配是否存在，如存在，返回存在多少个
 	AllWords() []string                     // 获取所有的词
 	StartsWithWords(prefix string) []string // 获取所有以prefix开头的词
-	Delete(value string)                    // 删除一个值
+	Delete(word string)                    // 删除一个值
 }
 
 type TrieNode struct {
@@ -35,8 +35,8 @@ func NewTrieNode() *TrieNode {
 }
 
 // 插入一个值
-func (t *TrieNode) Insert(value string) {
-	for i, v := range value {
+func (t *TrieNode) Insert(word string) {
+	for i, v := range word {
 		j := int(v - 'a')
 		if t.Nexts[j] == nil { // 不存在，添加node
 			trieNode := NewTrieNode()
@@ -44,28 +44,28 @@ func (t *TrieNode) Insert(value string) {
 			trieNode.Value = string(v)
 			t.Nexts[j] = trieNode
 
-			if len(value) == 1 { // 结束字符，end+1
+			if len(word) == 1 { // 结束字符，end+1
 				trieNode.end++
 			} else {
-				trieNode.Insert(value[i+1:])
+				trieNode.Insert(word[i+1:])
 			}
 			break
 		}
 		// 存在node，pass+1，并判断是否结束
 		next := t.Nexts[j]
 		next.pass++
-		if len(value) == 1 { // 存在且为结束字符
+		if len(word) == 1 { // 存在且为结束字符
 			next.end++
 		} else {
-			next.Insert(value[i+1:])
+			next.Insert(word[i+1:])
 			break
 		}
 	}
 }
 
 // 查找一个值
-func (t *TrieNode) Search(value string) (int, bool) {
-	for i, v := range value {
+func (t *TrieNode) Search(word string) (int, bool) {
+	for i, v := range word {
 		j := int(v - 'a')
 		next := t.Nexts[j]
 		// 越界了，不存在
@@ -74,13 +74,13 @@ func (t *TrieNode) Search(value string) (int, bool) {
 		}
 
 		// 最后一个字符
-		if len(value) == 1 {
+		if len(word) == 1 {
 			if next.end > 0 { // 如果为结束点
 				return next.end, true
 			}
 			return 0, false
 		} else {
-			return next.Search(value[i+1:])
+			return next.Search(word[i+1:])
 		}
 	}
 	return 0, false
@@ -161,13 +161,13 @@ func (t *TrieNode) StartsWithWords(prefix string) []string {
 }
 
 // 删除一个值
-func (t *TrieNode) Delete(value string) {
+func (t *TrieNode) Delete(word string) {
 	// 必须先判断是否存在
-	_, exists := t.Search(value)
+	_, exists := t.Search(word)
 	if !exists {
 		return
 	}
-	for i, v := range value {
+	for i, v := range word {
 		j := int(v - 'a')
 		next := t.Nexts[j]
 		if next == nil { // 不存在
@@ -182,11 +182,11 @@ func (t *TrieNode) Delete(value string) {
 			return
 		}
 		// 如果pass>0
-		if len(value) == 1 { // 删除结尾字符
+		if len(word) == 1 { // 删除结尾字符
 			next.end--
 			return
 		} else {
-			next.Delete(value[i+1:])
+			next.Delete(word[i+1:])
 			break
 		}
 	}
