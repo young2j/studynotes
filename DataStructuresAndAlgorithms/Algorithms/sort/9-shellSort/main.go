@@ -38,7 +38,7 @@ func insertSort(arr []int, idxs []int) {
  gap = gap/2 = 3/2  = 1  [0,1)上：下标差1取数，就是整个数组
 												 [0,1,2,3,4,5,6,7,8,9,10,11,12] 最后做一次插入排序
 */
-func hellSort(arr []int) []int {
+func shellSort(arr []int) []int {
 	if len(arr) < 2 {
 		return arr
 	}
@@ -63,6 +63,6 @@ func hellSort(arr []int) []int {
 func main() {
 	arr := utils.RandomIntArr(10, 100)
 	fmt.Println("origin:", arr)
-	arr = hellSort(arr)
+	arr = shellSort(arr)
 	fmt.Println("sorted:", arr)
 }
