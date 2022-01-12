@@ -70,9 +70,10 @@ func NewStaticList() StaticList {
 需要先在空闲位插入值，然后调整cur的值：
 1. 首先查找是否具有空位，有则6号位先插入值666，head.cur记录更新为下一个空位7；
 2. 看尾节点，尾节点记录的是数据域第一个位置，循环(i-1)次，拿到第i个数的cur
-   (通过多次增删，可能变得不会如示例一样看起来那么有序，需要通过尾节点的cur往下遍历)；
-	 循环3-1=2次，1.cur=2.cur=3, 则更新6号位的cur为3，表示新插入值的下一个值为原3号位；
-3. 原3号位的上一位2号位的cur=3更新为6，表示下一个值为新插入的6号位；
+   (通过多次增删，cur值可能变得不会如示例一样看起来那么有序，需要通过尾节点的cur往下遍历)；
+	 循环3-1=2次，tail.cur=1.cur=2 
+3. 更新6号位的cur为2.cur=3，表示新插入值的下一个值为原3号位；
+4. 更新2号位的cur为6，表示下一个值为新插入的6号位；
 
 
       head                     |---------空闲区--------|  tail
@@ -133,7 +134,7 @@ func (s *StaticList) Len() int {
 1. 判断4不越界；
 2. 从尾节点开始遍历4-1=3次，cur=1->2->6;
 3. 6号位的cur=3，即要删除的数的位置；将6号位置的cur值更新为要删除位置的cur=4；
-4. 将要删除位置的cur更新为下一个空闲区，即head.cur
+4. 将要删除位置3的cur更新为下一个空闲区，即head.cur=7
 5. 更新head.cur的值为要删除的位号3，表示空闲区第一个位置为3；
 
       head                     |---------空闲区--------|  tail
@@ -158,7 +159,7 @@ func (s *StaticList) Delete(i int) {
 	s[k].cur = s[j].cur // s[6].cur = s[3].cur = 4
 	s[j].cur = s[0].cur // s[3].cur = s[0].cur = 7
 	s[j].value = nil    // 值置为nil
-	s[0].cur = k        // 3
+	s[0].cur = j        // 3
 }
 
 func main() {
@@ -174,8 +175,8 @@ func main() {
 	}
 
 	// 往4位置插入666
-	fmt.Println(".....往第4个位置插入一个数666.....")
-	staticList.Insert(4, 666)
+	fmt.Println(".....往第3个位置插入一个数666.....")
+	staticList.Insert(3, 666)
 	fmt.Println("len(staticList):", staticList.Len())
 
 	for n, node := range staticList {
@@ -183,7 +184,7 @@ func main() {
 	}
 
 	// 删除第4个数
-	fmt.Println("....删除第4个数666后....")
+	fmt.Println("....删除第4个数6后....")
 	staticList.Delete(4)
 	fmt.Println("len(staticList):", staticList.Len())
 	for n, node := range staticList {
