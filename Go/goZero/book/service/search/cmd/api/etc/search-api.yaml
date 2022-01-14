@@ -1,0 +1,7 @@
+Name: search-api
+Host: 0.0.0.0
+Port: 8889
+
+Auth:
+  AccessSecret: JLKFSHFLUOwu34ljslfjs # 这个值必须要和user api中声明的一致。
+  AccessExpire: 300
