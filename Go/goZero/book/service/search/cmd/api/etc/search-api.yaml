@@ -5,3 +5,9 @@ Port: 8889
 Auth:
   AccessSecret: JLKFSHFLUOwu34ljslfjs # 这个值必须要和user api中声明的一致。
   AccessExpire: 300
+
+UserRpc:
+  Etcd:
+    Hosts:
+      - 127.0.0.1:2379
+    Key: user.rpc
