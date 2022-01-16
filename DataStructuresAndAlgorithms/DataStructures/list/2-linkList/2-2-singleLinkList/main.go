@@ -8,6 +8,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 )
 
@@ -28,7 +29,10 @@ type Node struct {
 
 type SingleLinkList Node
 
-// 初始化单链表
+/*
+初始化单链表
+head.next -> nil
+*/
 func NewSingleLinkList() SingleLinkLister {
 	return &SingleLinkList{}
 }
@@ -41,7 +45,7 @@ func (s *SingleLinkList) Len() int {
 		node = node.next
 		length++
 	}
-	return int(length)
+	return length
 }
 
 //获取i元素的值
@@ -53,7 +57,7 @@ func (s *SingleLinkList) Get(i int) (interface{}, error) {
 		i--
 	}
 	if node == nil {
-		panic("i: index out of range")
+		return nil, errors.New("i: index out of range")
 	}
 
 	return node.value, nil
@@ -111,7 +115,7 @@ head.next -> Node.next -> Node.next -> Node.next -> Node.next -> nil
 																	   2(X)
 1. 判断删除位置是否为第一个，如果是，则头节点的next指向待删除的节点next；
 2. 如果不是，则
-3. 找到i-1节点，将i-1节点的next待删除的节点next；
+3. 找到i-1节点，将i-1节点的next指向待删除的节点next；
 */
 func (s *SingleLinkList) Delete(i int) {
 	// 删除第一个节点
@@ -145,8 +149,8 @@ func (s *SingleLinkList) Reverse() {
 	curNode := s.next
 
 	for curNode != nil {
-		curNode.next = preNode // 这行一定要先行
 		nextNode := curNode.next
+		curNode.next = preNode // 这行一定要先行
 		if nextNode == nil { // 最后一个节点
 			s.next = curNode
 			return
