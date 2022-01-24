@@ -27,15 +27,12 @@ services:
   # run install-server
 
   # 3. 启动yapi服务
-  # docker-compose up -d yapi
-  yapi:
-    image: registry.cn-hangzhou.aliyuncs.com/anoyi/yapi
-    container_name: yapi
-    working_dir: /yapi/vendors
-    command: server/app.js
-    ports:
-      - 3000:3000
-    volumes:
-      - $PWD/config.json:/yapi/config.json
-    links:
-      - mongo
+  # docker run -d \
+  #   --name yapi \
+  #   --link mongo:mongo \
+  #   --workdir /yapi/vendors \
+  #   -p 3000:3000 \
+  #   -v $PWD/config.json:/yapi/config.json \
+  #   registry.cn-hangzhou.aliyuncs.com/anoyi/yapi \
+  #   server/app.js
+
