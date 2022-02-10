@@ -2,7 +2,7 @@
  * File: parseModel.go
  * Created Date: 2022-02-09 11:55:33
  * Author: ysj
- * Description:
+ * Description: 解析模型定义
  */
 
 package main

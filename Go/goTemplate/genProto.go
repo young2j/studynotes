@@ -123,9 +123,14 @@ func genProto(dir, modelName string, astFields []*ast.Field) {
 	}
 
 	for _, astField := range astFields {
+		description := strings.TrimSpace(astField.Comment.Text())
+		if astField.Tag != nil && description == "" {
+			description = getDescTagValue(astField.Tag.Value)
+		}
+
 		field := &Field{
 			Name:        strcase.ToSnake(astField.Names[0].Name),
-			Description: strings.TrimSpace(astField.Comment.Text()),
+			Description: description,
 		}
 		switch astField.Type.(type) {
 		case *ast.Ident:

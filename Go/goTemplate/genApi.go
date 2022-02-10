@@ -153,6 +153,9 @@ func genApi(dir, modelName string, astFields []*ast.Field) {
 
 		lowerCamelFieldName := strcase.ToLowerCamel(field.Name)
 		description := strings.TrimSpace(astField.Comment.Text())
+		if astField.Tag != nil && description == "" {
+			description = getDescTagValue(astField.Tag.Value)
+		}
 
 		switch astField.Type.(type) {
 		case *ast.Ident:

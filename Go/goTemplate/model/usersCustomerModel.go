@@ -19,43 +19,43 @@ type Operator struct {
 }
 
 // 客户模型
-type UsersCustomer struct {
-	Id             bson.ObjectId //
-	Uid            string        // uuid
-	Identity       int32         // 客户身份
-	Name           string        // 姓名
-	Status         int32         // 客户状态
-	AccountName    string        // 账号名称
-	AccountStatus  int32         // 账号状态
-	Email          string        // 客户邮箱
-	Phone          string        // 客户电话
-	KsAccount      string        // 创宇通行证
-	SalesPerson    string        // 关联销售人员
-	CanCustomizeKW int32         // 是否可自定义敏感词
-	CreatedTime    time.Time     // 创建时间
-	UpdatedTime    time.Time     // 更新时间
-	Operator       Operator      // 操作人，{id:'',name:''}
-	Domains        []string      // 监测域名
-}
-
 // type UsersCustomer struct {
-// 	Id             bson.ObjectId `json:"id" bson:"_id,omitempty"`
-// 	Uid            string        `json:"uid" bson:"uid" description:"uuid"`
-// 	Identity       int32         `json:"identity" bson:"identity" description:"客户身份"`
-// 	Name           string        `json:"name" bson:"name" description:"姓名"`
-// 	Status         int32         `json:"status" bson:"status" description:"客户状态"`
-// 	AccountName    string        `json:"accountName" bson:"accountName" description:"账号名称"`
-// 	AccountStatus  int32         `json:"accountStatus" bson:"accountStatus" description:"账号状态"`
-// 	Email          string        `json:"email" bson:"email" description:"客户邮箱"`
-// 	Phone          string        `json:"phone" bson:"phone" description:"客户电话"`
-// 	KsAccount      string        `json:"ksAccount" bson:"ksAccount" description:"创宇通行证"`
-// 	SalesPerson    string        `json:"salesPerson" bson:"salesPerson" description:"关联销售人员"`
-// 	CanCustomizeKW int32         `json:"canCustomizeKW" bson:"canCustomizeKW" description:"是否可自定义敏感词"`
-// 	CreatedTime    time.Time     `json:"createdTime" bson:"createdTime" description:"创建时间"`
-// 	UpdatedTime    time.Time     `json:"updatedTime" bson:"updatedTime" description:"更新时间"`
-// 	Operator       Operator      `json:"operator" bson:"operator" description:"操作人，{id:'',name:''}"`
-// 	Domains        []string      `json:"domains" bson:"domains" description:"监测域名"`
+// 	Id             bson.ObjectId //
+// 	Uid            string        // uuid
+// 	Identity       int32         // 客户身份
+// 	Name           string        // 姓名
+// 	Status         int32         // 客户状态
+// 	AccountName    string        // 账号名称
+// 	AccountStatus  int32         // 账号状态
+// 	Email          string        // 客户邮箱
+// 	Phone          string        // 客户电话
+// 	KsAccount      string        // 创宇通行证
+// 	SalesPerson    string        // 关联销售人员
+// 	CanCustomizeKW int32         // 是否可自定义敏感词
+// 	CreatedTime    time.Time     // 创建时间
+// 	UpdatedTime    time.Time     // 更新时间
+// 	Operator       Operator      // 操作人，{id:'',name:''}
+// 	Domains        []string      // 监测域名
 // }
+
+type UsersCustomer struct {
+	Id             bson.ObjectId `json:"id" bson:"_id,omitempty"`
+	Uid            string        `json:"uid" bson:"uid" description:"uuid"`
+	Identity       int32         `json:"identity" bson:"identity" description:"客户身份"`
+	Name           string        `json:"name" bson:"name" description:"姓名"`
+	Status         int32         `json:"status" bson:"status" description:"客户状态"`
+	AccountName    string        `json:"accountName" bson:"accountName" description:"账号名称"`
+	AccountStatus  int32         `json:"accountStatus" bson:"accountStatus" description:"账号状态"`
+	Email          string        `json:"email" bson:"email" description:"客户邮箱"`
+	Phone          string        `json:"phone" bson:"phone" description:"客户电话"`
+	KsAccount      string        `json:"ksAccount" bson:"ksAccount" description:"创宇通行证"`
+	SalesPerson    string        `json:"salesPerson" bson:"salesPerson" description:"关联销售人员"`
+	CanCustomizeKW int32         `json:"canCustomizeKW" bson:"canCustomizeKW" description:"是否可自定义敏感词"`
+	CreatedTime    time.Time     `json:"createdTime" bson:"createdTime" description:"创建时间"`
+	UpdatedTime    time.Time     `json:"updatedTime" bson:"updatedTime" description:"更新时间"`
+	Operator       Operator      `json:"operator" bson:"operator" description:"操作人，{id:'',name:''}"`
+	Domains        []string      `json:"domains" bson:"domains" description:"监测域名"`
+}
 
 type UsersCustomerModel interface {
 	cacheKeyFromQuery(query interface{}) (string, error)

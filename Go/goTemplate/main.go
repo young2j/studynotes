@@ -2,7 +2,7 @@
  * File: main.go
  * Created Date: 2022-02-09 10:35:52
  * Author: ysj
- * Description:
+ * Description: gozero 辅助生成api和proto工具
  */
 
 package main
@@ -10,10 +10,21 @@ package main
 import (
 	"flag"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"github.com/iancoleman/strcase"
 )
+
+var descRegx = regexp.MustCompile(`description:"(.*)"`)
+
+func getDescTagValue(tagValue string) string {
+	res := descRegx.FindStringSubmatch(tagValue)
+	if len(res) > 1 {
+		return res[1]
+	}
+	return ""
+}
 
 func parseModelFileName(fileName string) (string, string) {
 	dir, file := filepath.Split(fileName)
