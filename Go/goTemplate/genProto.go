@@ -22,7 +22,7 @@ const protoTpl = `
 syntax = "proto3";
 
 package {{.ServiceName}};
-option go_package = "./{{ ToLower .ServiceName}}pb";
+option go_package = "./{{.ServiceName}}pb";
 
 // 新增{{.Table}}信息
 message	Add{{.Table}}Req {
@@ -86,7 +86,7 @@ message List{{.Table}}sResp {
 	  int32 total_page = 5; //总页数
 }
 
-service {{.ServiceName}}Service {
+service {{ToCamel .ServiceName}}Service {
   // 新增{{.Table}}
   rpc Add{{.Table}}(Add{{.Table}}Req) returns (Add{{.Table}}Resp);
 
@@ -151,7 +151,7 @@ func genProto(dir, modelName string, astFields []*ast.Field) {
 		tplData.Fields = append(tplData.Fields, field)
 	}
 
-	funcs := template.FuncMap{"ToLower": strings.ToLower, "AddOne": func(i int) int { return i + 1 }}
+	funcs := template.FuncMap{"ToCamel": strcase.ToCamel, "AddOne": func(i int) int { return i + 1 }}
 
 	tpl, err := template.New(modelName).Funcs(funcs).Parse(protoTpl)
 	if err != nil {
