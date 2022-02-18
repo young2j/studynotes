@@ -49,7 +49,7 @@ message Delete{{.Table}}Resp {
 // 修改{{.Table}}信息
 message Change{{.Table}}Req {
 {{- range $i,$field := .Fields}}
-	{{$field.Type}} {{$field.Name}} = {{AddOne $i}}; //{{$field.Description}}
+	{{if eq $field.Name "id"}}{{$field.Type}}{{else}}optional {{$field.Type}}{{end}} {{$field.Name}} = {{AddOne $i}}; //{{$field.Description}}
 {{- end}}
 }
 message Change{{.Table}}Resp {

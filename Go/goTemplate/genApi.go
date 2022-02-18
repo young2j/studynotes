@@ -13,6 +13,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"text/template"
 
@@ -55,7 +56,7 @@ type (
 	// 修改{{.Table}}信息
 	Change{{.Table}}Req {
 	{{- range $field := .Fields}}
-		{{$field.Name}} {{$field.Type}} {{$field.Tag}}
+		{{$field.Name}} {{$field.Type}} {{if eq $field.Name "Id"}}{{$field.Tag}}{{else}}{{AddOptional $field.Tag}}{{end}}
 	{{- end}}
 	}
 	Change{{.Table}}Resp {
@@ -133,6 +134,18 @@ type ApiTplData struct {
 	Backticks   string
 }
 
+var regex = regexp.MustCompile(`json:"\w+`)
+
+func addJsonOptional(tag string) string {
+	// tag: `json:"name" description:"姓名"` -> `json:"name,optional" description:"姓名"`
+	jsonTag := regex.FindString(tag)
+	if jsonTag == "" {
+		return tag
+	}
+	tag = regex.ReplaceAllString(tag, jsonTag+",optional")
+	return tag
+}
+
 func genApi(dir, modelName string, astFields []*ast.Field) {
 	snakeName := strcase.ToSnake(modelName)
 	snakeNameSplits := strings.Split(snakeName, "_")
@@ -179,7 +192,10 @@ func genApi(dir, modelName string, astFields []*ast.Field) {
 		}
 		tplData.Fields = append(tplData.Fields, field)
 	}
-	funcs := template.FuncMap{"ToLower": strings.ToLower}
+	funcs := template.FuncMap{
+		"ToLower":     strings.ToLower,
+		"AddOptional": addJsonOptional,
+	}
 	tpl, err := template.New(modelName).Funcs(funcs).Parse(apiTpl)
 	if err != nil {
 		log.Fatal(err)
