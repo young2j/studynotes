@@ -82,8 +82,10 @@ type (
 
 	// 获取{{.Table}}列表
 	List{{.Table}}sReq {
-		Page     int32 {{.Backticks}}form:"page,optional" description:"当前页"{{.Backticks}}
-		PageSize int32 {{.Backticks}}form:"pageSize,optional" description:"每页数量"{{.Backticks}}
+		Page     int32  {{.Backticks}}form:"page,optional" description:"当前页"{{.Backticks}}
+		PageSize int32  {{.Backticks}}form:"pageSize,optional" description:"每页数量"{{.Backticks}}
+		Search   string {{.Backticks}}form:"search,optional" description:"搜索"{{.Backticks}}
+		Sort     string {{.Backticks}}form:"sort,optional" description:"排序"{{.Backticks}}
 	}
 	List{{.Table}}sResp {
 		Code      int32             {{.Backticks}}json:"code" description:"返回码"{{.Backticks}}

@@ -49,7 +49,7 @@ message Delete{{.Table}}Resp {
 // 修改{{.Table}}信息
 message Change{{.Table}}Req {
 {{- range $i,$field := .Fields}}
-	{{if eq $field.Name "id"}}{{$field.Type}}{{else}}optional {{$field.Type}}{{end}} {{$field.Name}} = {{AddOne $i}}; //{{$field.Description}}
+	{{$field.Type}} {{$field.Name}} = {{AddOne $i}}; //{{$field.Description}}
 {{- end}}
 }
 message Change{{.Table}}Resp {
@@ -75,8 +75,10 @@ message Get{{.Table}}Resp {
 
 // 获取{{.Table}}列表
 message List{{.Table}}sReq {
-	optional int32 page = 1;     //当前页
-	optional int32 page_size = 2;  //每页数量
+	int32  page = 1;       //当前页
+	int32  page_size = 2;  //每页数量
+	string search = 3;     // 搜索
+	string sort = 4;       //排序
 }
 message List{{.Table}}sResp {
 		int32 code = 1; //返回码
