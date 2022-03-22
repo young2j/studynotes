@@ -56,25 +56,33 @@ func genFieldTag(modelName string, astFields []*ast.Field) {
 		if astField.Tag != nil && description == "" {
 			description = getDescTagValue(astField.Tag.Value)
 		}
-		switch astField.Type.(type) {
+		switch fieldtt := astField.Type.(type) {
 		case *ast.Ident:
-			field.Type = astField.Type.(*ast.Ident).Name
-			field.Tag = fmt.Sprintf("`json:\"%s\" bson:\"%s\" description:\"%s\"`", lowerCamelFieldName, lowerCamelFieldName, description)
+			field.Type = fieldtt.Name
+			field.Tag = fmt.Sprintf("`json:\"%s,omitempty\" bson:\"%s,omitempty\" description:\"%s\"`", lowerCamelFieldName, lowerCamelFieldName, description)
 		case *ast.SelectorExpr:
-			expr, ok := astField.Type.(*ast.SelectorExpr)
-			if !ok {
-				continue
-			}
-			field.Type = expr.X.(*ast.Ident).Name + "." + expr.Sel.Name
+			field.Type = fieldtt.X.(*ast.Ident).Name + "." + fieldtt.Sel.Name
 			if lowerCamelFieldName == "id" {
-				field.Tag = fmt.Sprintf("`json:\"%s\" bson:\"%s\" description:\"%s\"`", lowerCamelFieldName, "_id,omitempty", description)
+				field.Tag = fmt.Sprintf("`json:\"%s,omitempty\" bson:\"%s,omitempty\" description:\"%s\"`", lowerCamelFieldName, "_id", description)
 			} else {
-				field.Tag = fmt.Sprintf("`json:\"%s\" bson:\"%s\" description:\"%s\"`", lowerCamelFieldName, lowerCamelFieldName, description)
+				field.Tag = fmt.Sprintf("`json:\"%s,omitempty\" bson:\"%s,omitempty\" description:\"%s\"`", lowerCamelFieldName, lowerCamelFieldName, description)
 			}
 		case *ast.ArrayType:
-			elemType := astField.Type.(*ast.ArrayType).Elt.(*ast.Ident).Name
-			field.Type = "[]" + elemType
-			field.Tag = fmt.Sprintf("`json:\"%s\" bson:\"%s\" description:\"%s\"`", lowerCamelFieldName, lowerCamelFieldName, description)
+			elt := fieldtt.Elt
+			eltype := ""
+			switch eltt := elt.(type) {
+			case *ast.Ident:
+				eltype = eltt.Name
+			case *ast.StarExpr:
+				eltype = "*" + eltt.X.(*ast.Ident).Name
+			case *ast.SelectorExpr:
+				eltype = eltt.X.(*ast.Ident).Name + "." + eltt.Sel.Name
+				if eltype == "bson.ObjectId" || eltype == "time.Time" {
+					eltype = "string"
+				}
+			}
+			field.Type = "[]" + eltype
+			field.Tag = fmt.Sprintf("`json:\"%s,omitempty\" bson:\"%s,omitempty\" description:\"%s\"`", lowerCamelFieldName, lowerCamelFieldName, description)
 		}
 		tplData.Fields = append(tplData.Fields, field)
 	}

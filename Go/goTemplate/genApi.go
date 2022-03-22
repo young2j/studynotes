@@ -24,7 +24,7 @@ const apiTpl = `
 syntax = "v1"
 
 info(
-	title: "{{.ServiceName}}-api"
+	title: "{{ToLower .ServiceName}}-api"
 	desc: "xxx api"
 	author: "xxx"
 	email: "xxx@knownsec.com"
@@ -41,16 +41,16 @@ type (
 	{{- end}}
 	}
 	Add{{.Table}}Resp {
-		Code int32  {{.Backticks}}json:"code" description:"返回码"{{.Backticks}}
-		Msg  string {{.Backticks}}json:"msg" description:"消息说明"{{.Backticks}}
+		Code int32  {{.Backticks}}json:"code,default=200" description:"返回码"{{.Backticks}}
+		Msg  string {{.Backticks}}json:"msg,default=请求成功" description:"消息说明"{{.Backticks}}
 	}
 	// 删除{{.Table}}信息
 	Delete{{.Table}}Req {
 		Id string {{.Backticks}}path:"id" description:"objectId"{{.Backticks}}
 	}
 	Delete{{.Table}}Resp {
-		Code int32  {{.Backticks}}json:"code" description:"返回码"{{.Backticks}}
-		Msg  string {{.Backticks}}json:"msg" description:"消息说明"{{.Backticks}}
+		Code int32  {{.Backticks}}json:"code,default=200" description:"返回码"{{.Backticks}}
+		Msg  string {{.Backticks}}json:"msg,default=请求成功" description:"消息说明"{{.Backticks}}
 	}
 
 	// 修改{{.Table}}信息
@@ -60,8 +60,8 @@ type (
 	{{- end}}
 	}
 	Change{{.Table}}Resp {
-		Code int32  {{.Backticks}}json:"code" description:"返回码"{{.Backticks}}
-		Msg  string {{.Backticks}}json:"msg" description:"消息说明"{{.Backticks}}
+		Code int32  {{.Backticks}}json:"code,default=200" description:"返回码"{{.Backticks}}
+		Msg  string {{.Backticks}}json:"msg,default=请求成功" description:"消息说明"{{.Backticks}}
 	}
 
 	// 获取{{.Table}}信息
@@ -75,8 +75,8 @@ type (
 		Id string {{.Backticks}}path:"id" description:"objectId"{{.Backticks}}
 	}
 	Get{{.Table}}Resp {
-		Code int32  {{.Backticks}}json:"code" description:"返回码"{{.Backticks}}
-		Msg  string {{.Backticks}}json:"msg" description:"消息说明"{{.Backticks}}
+		Code int32  {{.Backticks}}json:"code,default=200" description:"返回码"{{.Backticks}}
+		Msg  string {{.Backticks}}json:"msg,default=请求成功" description:"消息说明"{{.Backticks}}
 		Data *{{.Table}}Info {{.Backticks}}json:"data" description:"数据"{{.Backticks}}
 	}
 
@@ -88,8 +88,8 @@ type (
 		Sort     string {{.Backticks}}form:"sort,optional" description:"排序"{{.Backticks}}
 	}
 	List{{.Table}}sResp {
-		Code      int32             {{.Backticks}}json:"code" description:"返回码"{{.Backticks}}
-		Msg       string            {{.Backticks}}json:"msg" description:"消息说明"{{.Backticks}}
+		Code      int32             {{.Backticks}}json:"code,default=200" description:"返回码"{{.Backticks}}
+		Msg       string            {{.Backticks}}json:"msg,default=请求成功" description:"消息说明"{{.Backticks}}
 		Data      []*{{.Table}}Info {{.Backticks}}json:"data" description:"数据"{{.Backticks}}
 		Count     int32             {{.Backticks}}json:"count" description:"总数"{{.Backticks}}
 		TotalPage int32             {{.Backticks}}json:"totalPage" description:"总页数"{{.Backticks}}
@@ -148,14 +148,22 @@ func addJsonOptional(tag string) string {
 	return tag
 }
 
-func genApi(dir, modelName string, astFields []*ast.Field) {
-	snakeName := strcase.ToSnake(modelName)
-	snakeNameSplits := strings.Split(snakeName, "_")
-	serviceName := snakeNameSplits[0]
-	table := strcase.ToCamel(snakeNameSplits[1])
+func genApi(dir, modelName, serviceName string, astFields []*ast.Field) {
+	table := ""
+	if serviceName == "" {
+		snakeName := strcase.ToSnake(modelName)
+		snakeNameSplits := strings.SplitN(snakeName, "_", 2) // [users, staff]
+		serviceName = snakeNameSplits[0]                     // users
+		table = strcase.ToCamel(snakeNameSplits[1])          // staff
+	} else {
+		table = strings.TrimPrefix(modelName, strcase.ToCamel(serviceName))
+	}
+	fmt.Printf("serviceName: %v\n", serviceName)
+	fmt.Printf("modelName: %v\n", modelName)
+	fmt.Printf("tableName: %v\n", table)
 
 	tplData := &ApiTplData{
-		ServiceName: serviceName,
+		ServiceName: strings.ToLower(serviceName),
 		Table:       table,
 		Fields:      make([]*Field, 0),
 		Backticks:   "`",
@@ -172,24 +180,32 @@ func genApi(dir, modelName string, astFields []*ast.Field) {
 			description = getDescTagValue(astField.Tag.Value)
 		}
 
-		switch astField.Type.(type) {
+		switch fieldtt := astField.Type.(type) {
 		case *ast.Ident:
-			field.Type = astField.Type.(*ast.Ident).Name
+			field.Type = fieldtt.Name
 			field.Tag = fmt.Sprintf("`json:\"%s\" description:\"%s\"`", lowerCamelFieldName, description)
 		case *ast.SelectorExpr:
-			expr, ok := astField.Type.(*ast.SelectorExpr)
-			if !ok {
-				continue
-			}
-			field.Type = expr.X.(*ast.Ident).Name + "." + expr.Sel.Name
+			field.Type = fieldtt.X.(*ast.Ident).Name + "." + fieldtt.Sel.Name
 			if field.Type == "bson.ObjectId" || field.Type == "time.Time" {
 				field.Type = "string"
 			}
 			field.Tag = fmt.Sprintf("`json:\"%s\" description:\"%s\"`", lowerCamelFieldName, description)
 
 		case *ast.ArrayType:
-			elemType := astField.Type.(*ast.ArrayType).Elt.(*ast.Ident).Name
-			field.Type = "[]" + elemType
+			elt := fieldtt.Elt
+			eltype := ""
+			switch eltt := elt.(type) {
+			case *ast.Ident:
+				eltype = eltt.Name
+			case *ast.StarExpr:
+				eltype = "*" + eltt.X.(*ast.Ident).Name
+			case *ast.SelectorExpr:
+				eltype = eltt.X.(*ast.Ident).Name + "." + eltt.Sel.Name
+				if eltype == "bson.ObjectId" || eltype == "time.Time" {
+					eltype = "string"
+				}
+			}
+			field.Type = "[]" + eltype
 			field.Tag = fmt.Sprintf("`json:\"%s\" description:\"%s\"`", lowerCamelFieldName, description)
 		}
 		tplData.Fields = append(tplData.Fields, field)
@@ -203,7 +219,7 @@ func genApi(dir, modelName string, astFields []*ast.Field) {
 		log.Fatal(err)
 	}
 
-	target := filepath.Join(dir, serviceName+".api")
+	target := filepath.Join(dir, strings.ToLower(serviceName)+".api")
 	t, err := os.Create(target)
 	if err != nil {
 		log.Fatal(err)

@@ -115,35 +115,54 @@ fmt.Printf("psm2: %#v\n", psm2)
 
 ```go
 roll := 100
-	st1 := model.AccessRolePerms{
-		Role: "角色",
-		Roll: &roll,
-		EmbedFields: model.EmbedFields{
-			EmbedF1: "embedF1",
-		},
-		Actions: []string{"GET", "POST"},
-		Perms:   []*model.Perm{{Action: "GET", Label: "rest-get-method"}},
-		PermMap: map[string]*model.Perm{"perm": {Action: "PUT", Label: "rest-put-method"}},
-	}
-	st2 := types.AccessRolePerms{}
-	gocopy.Copy(&st2, &st1)
-	fmt.Println("==============================")
-	fmt.Printf("st2.Role: %v\n", *st2.Role)
-	fmt.Printf("st2.Roll: %v\n", *st2.Roll)
-	fmt.Printf("st2.Actions: %v\n", st2.Actions)
+st1 := model.AccessRolePerms{
+  Role: "角色",
+  Roll: &roll,
+  EmbedFields: model.EmbedFields{
+    EmbedF1: "embedF1",
+  },
+  Actions: []string{"GET", "POST"},
+  Perms:   []*model.Perm{{Action: "GET", Label: "rest-get-method"}},
+  PermMap: map[string]*model.Perm{"perm": {Action: "PUT", Label: "rest-put-method"}},
+}
+st2 := types.AccessRolePerms{}
+gocopy.Copy(&st2, &st1)
+fmt.Println("==============================")
+fmt.Printf("st2.Role: %v\n", *st2.Role)
+fmt.Printf("st2.Roll: %v\n", *st2.Roll)
+fmt.Printf("st2.Actions: %v\n", st2.Actions)
 
-	for _, v := range st2.Perms {
-		fmt.Printf("Perms: %#v\n", v)
-	}
-	for k, v := range st2.PermMap {
-		fmt.Printf("PermMap k:%v v:%#v\n", k, v)
-	}
+for _, v := range st2.Perms {
+  fmt.Printf("Perms: %#v\n", v)
+}
+for k, v := range st2.PermMap {
+  fmt.Printf("PermMap k:%v v:%#v\n", k, v)
+}
 
 // st2.Role: 角色
 // st2.Roll: 100
 // st2.Actions: [GET POST]
 // Perms: &types.Perm{Action:"GET", Label:"rest-get-method"}
 // PermMap k:perm v:&types.Perm{Action:"PUT", Label:"rest-put-method"}
+```
+### Copy specified field
+
+`gocopy`可以通过字段名指定将某一个字段拷贝至另一个字段:
+
+```go
+// from field to another field
+ost1 := model.AccessRolePerms{
+  From: "fromto",
+}
+ost2 := types.AccessRolePerms{}
+opt := gocopy.Option{
+  NameFromTo:       map[string]string{"From": "To"},
+}
+gocopy.CopyWithOption(&ost2, &ost1, &opt)
+
+fmt.Printf("ost2.To: %v\n", ost2.To)
+
+// ost2.To: fromto
 ```
 
 ## Append mode
@@ -210,27 +229,50 @@ for i, pm := range ast2.PermMap {
 // ast2.PermMap[get]: &types.Perm{Action:"GET", Label:"rest-get-method"}
 ```
 
-## Copy specified field
+## Copy struct to map/bson.M
 
-`gocopy`可以通过字段名指定将某一个字段拷贝至另一个字段:
+`gocopy`可以将结构体字段拷贝到`map`结构中：
+
+* 如果是嵌套结构体，将拷贝为嵌套`map`。
+* 拷贝同样支持`append`模式。
+* 还可以忽略结构体中的零值。
+* 还以自定义拷贝后`map`中`key`的大小写风格。
 
 ```go
-// from field to another field
-ost1 := model.AccessRolePerms{
-  From: "fromto",
+fromst := model.AccessRolePerms{
+  Id1Hex:    bson.NewObjectId().Hex(),
+  Role:      "copystruct2map",
+  Actions: []string{"DELETE"}
+  Child: &model.AccessRolePerms{
+    Id1Hex: bson.NewObjectId().Hex(),
+    Role:   "embedstruct",
+  },
 }
-ost2 := types.AccessRolePerms{}
-opt := gocopy.Option{
-  NameFromTo:       map[string]string{"From": "To"},
+// toBM := map[string]interface{} // or
+toBM := bson.M{
+  "actions": []string{"PUT"}
 }
-gocopy.CopyWithOption(&ost2, &ost1, &opt)
+gocopy.CopyWithOption(&toBM, fromst, &gocopy.Option{
+  Append:           true,
+  IgnoreZero:       true,
+  //  ToCase:       "Camel", // default
+})
 
-fmt.Printf("ost2.To: %v\n", ost2.To)
+fmt.Println("==============================")
+fmt.Printf("toBM[\"id1Hex\"]: %v\n", toBM["id1Hex"])
+fmt.Printf("toBM[\"role\"]: %v\n", toBM["role"])
+fmt.Printf("toBM[\"actions\"]: %v\n", toBM["actions"])
+fmt.Printf("toBM[\"child\"]: %#v\n", toBM["child"])
 
-// ost2.To: fromto
+//toBM["id1Hex"]: ObjectIdHex("6215f4b4eb37b68aa0c5912d")
+//toBM["role"]: copystruct2map
+//toBM["actions"]: [PUT DELETE]
+//toBM["child"]: &bson.M{"id1Hex":"b\x15\xf4\xb4\xeb7\xb6\x8a\xa0ő.", "role":"embedstruct"}
 ```
 
-## ObjectId and String
+## Field conversion
+
+### ObjectId and String
 
 `gocopy`支持将`ObjectId`字段转换为`string`类型，反之亦然。
 
@@ -261,6 +303,95 @@ fmt.Printf("from.Id2Hex: %v to.Id2Hex: %v \n", from.Id2Hex, to.Id2Hex)
 // from.Id2: ObjectID("61f6cdf3cc541c1bc35a41fc") to.Id2:61f6cdf3cc541c1bc35a41fc
 // from.Id1Hex: 61f04828eb37b662c8f3b085 to.Id1Hex:ObjectIdHex("61f04828eb37b662c8f3b085")
 // from.Id2Hex: 61f04828eb37b662c8f3b085 to.Id2Hex:ObjectID("61f04828eb37b662c8f3b085")
+```
+
+### time.Time and String
+
+`gocopy`也支持将时间格式`time.Time`拷贝为字符串`String`，反之亦然。解析时，默认使用`"Asia/Shanghai"`时区，以及`2006-01-02 15:04:05`字符串时间格式。
+
+```go
+from1 := model.AccessRolePerms{
+  CreatedAt: time.Now(),
+  UpdatedAt: "2022/02/11 15:04:05",
+}
+to1 := types.AccessRolePerms{}
+option1 := gocopy.Option{
+  // default
+  // TimeToString: map[string]map[string]string{"CreatedAt": nil},
+  // StringToTime: map[string]map[string]string{"UpdatedAt": nil},
+  TimeToString: map[string]map[string]string{"CreatedAt": {"layout": "2006-01-02", "loc": "America/New_York"}},
+  StringToTime: map[string]map[string]string{"UpdatedAt": {"layout": "2006/01/02 15:04:05"}},
+}
+gocopy.CopyWithOption(&to1, from1, &option1)
+fmt.Println("==============================")
+fmt.Printf("time.Time to string-> to1.CreatedAt: %v\n", to1.CreatedAt)
+fmt.Printf("string to time.Time-> to1.UpdatedAt: %v\n", to1.UpdatedAt)
+
+//==============================
+//time.Time to string-> to1.CreatedAt: 2022-02-23
+//string to time.Time-> to1.UpdatedAt: 2022-02-11 15:04:05 +0800 CST
+```
+
+### Convert func
+
+`gocopy`也支持自定义转换函数，例如上述`ObjectId`以及`time.Time`均可以使用转换函数实现拷贝：
+
+```go
+id3 := primitive.NewObjectID()
+fromst1 := model.AccessRolePerms{
+  CreatedAt: time.Now(),
+  UpdatedAt: "2022/02/16",
+  Id1:       bson.NewObjectId(),
+  Id2:       primitive.NewObjectID(),
+  Id3:       &id3,
+  Id1Hex:    bson.NewObjectId().Hex(),
+  Id2Hex:    primitive.NewObjectID().Hex(),
+}
+tost1 := types.AccessRolePerms{}
+gocopy.CopyWithOption(&tost1, fromst1, &gocopy.Option{
+  Converters: map[string]func(interface{}) interface{}{
+    "CreatedAt": func(v interface{}) interface{} {
+      return v.(time.Time).Format("2006-01-02")
+    },
+    "UpdatedAt": func(v interface{}) interface{} {
+      t, _ := time.Parse("2006/01/02", v.(string))
+      return t
+    },
+    "Id1": func(v interface{}) interface{} {
+      return v.(bson.ObjectId).Hex()
+    },
+    "Id2": func(v interface{}) interface{} {
+      return v.(primitive.ObjectID).Hex()
+    },
+    "Id3": func(v interface{}) interface{} {
+      return v.(*primitive.ObjectID).Hex()
+    },
+    "Id1Hex": func(v interface{}) interface{} {
+      return bson.ObjectIdHex(v.(string))
+    },
+    "Id2Hex": func(v interface{}) interface{} {
+      oid, _ := primitive.ObjectIDFromHex(v.(string))
+      return oid
+    },
+  },
+})
+fmt.Println("============================")
+fmt.Printf("tost1.CreatedAt: %v\n", tost1.CreatedAt)
+fmt.Printf("tost1.UpdatedAt: %v\n", tost1.UpdatedAt)
+fmt.Printf("tost1.Id1: %v\n", tost1.Id1)
+fmt.Printf("tost1.Id2: %v\n", tost1.Id2)
+fmt.Printf("tost1.Id3: %v\n", tost1.Id3)
+fmt.Printf("tost1.Id1Hex: %v\n", tost1.Id1Hex)
+fmt.Printf("tost1.Id1Hex: %v\n", tost1.Id1Hex)
+
+//============================
+//tost1.CreatedAt: 2022-02-23
+//tost1.UpdatedAt: 2022-02-16 00:00:00 +0000 UTC
+//tost1.Id1: 0xc000011840
+//tost1.Id2: 6215f4b4b87485bc6045e5b3
+//tost1.Id3: 6215f4b4b87485bc6045e5b2
+//tost1.Id1Hex: ObjectIdHex("6215f4b4eb37b68aa0c59130")
+//tost1.Id1Hex: ObjectIdHex("6215f4b4eb37b68aa0c59130")
 ```
 
 ## Benchmark

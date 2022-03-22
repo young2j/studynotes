@@ -1,0 +1,142 @@
+syntax = "proto3";
+
+package users;
+option go_package = "./userspb";
+
+message Operator {
+  string id = 1;
+  string name = 2;
+};
+
+// UpsertCustomer信息
+message UpsertCustomerReq {
+  CustomerInfo query = 1; // upsert约束字段
+  CustomerInfo data = 2;  // upsert操作字段
+}
+message UpsertCustomerResp {
+  int32 code = 1;  //返回码
+  string msg = 2;  //消息说明
+  string data = 3; // UpsertedID
+}
+
+// 新增Customer信息
+message AddCustomerReq {
+  string uid = 1;               // uuid
+  int32 identity = 2;           //客户身份
+  string name = 3;              //姓名
+  int32 status = 4;             //客户状态
+  string account_name = 5;      //账号名称
+  int32 account_status = 6;     //账号状态
+  string email = 7;             //客户邮箱
+  string phone = 8;             //客户电话
+  string ks_account = 9;        //创宇通行证
+  string sales_person = 10;     //关联销售人员
+  int32 can_customize_kw = 11;  //是否可自定义敏感词
+  string created_time = 12;     //创建时间
+  string updated_time = 13;     //更新时间
+  Operator operator = 14;       //操作人，{id:'',name:''}
+  repeated string domains = 15; //监测域名
+}
+message AddCustomerResp {
+  int32 code = 1; //返回码
+  string msg = 2; //消息说明
+}
+
+// 删除Customer信息
+message DeleteCustomerReq {
+  string id = 1; // objectId
+}
+message DeleteCustomerResp {
+  int32 code = 1; //返回码
+  string msg = 2; //消息说明
+}
+
+// 修改Customer信息
+message ChangeCustomerReq {
+  string id = 1;                //
+  string uid = 2;               // uuid
+  int32 identity = 3;           //客户身份
+  string name = 4;              //姓名
+  int32 status = 5;             //客户状态
+  string account_name = 6;      //账号名称
+  int32 account_status = 7;     //账号状态
+  string email = 8;             //客户邮箱
+  string phone = 9;             //客户电话
+  string ks_account = 10;       //创宇通行证
+  string sales_person = 11;     //关联销售人员
+  int32 can_customize_kw = 12;  //是否可自定义敏感词
+  string created_time = 13;     //创建时间
+  string updated_time = 14;     //更新时间
+  Operator operator = 15;       //操作人，{id:'',name:''}
+  repeated string domains = 16; //监测域名
+}
+message ChangeCustomerResp {
+  int32 code = 1; //返回码
+  string msg = 2; //消息说明
+}
+
+// 获取Customer信息
+message CustomerInfo {
+  string id = 1;                //
+  string uid = 2;               // uuid
+  int32 identity = 3;           //客户身份
+  string name = 4;              //姓名
+  int32 status = 5;             //客户状态
+  string account_name = 6;      //账号名称
+  int32 account_status = 7;     //账号状态
+  string email = 8;             //客户邮箱
+  string phone = 9;             //客户电话
+  string ks_account = 10;       //创宇通行证
+  string sales_person = 11;     //关联销售人员
+  int32 can_customize_kw = 12;  //是否可自定义敏感词
+  string created_time = 13;     //创建时间
+  string updated_time = 14;     //更新时间
+  Operator operator = 15;       //操作人，{id:'',name:''}
+  repeated string domains = 16; //监测域名
+}
+// 获取Customer详情
+message GetCustomerReq {
+  string id = 1; // objectId
+}
+message GetCustomerResp {
+  int32 code = 1;        //返回码
+  string msg = 2;        //消息说明
+  CustomerInfo data = 3; //数据
+}
+
+// 获取Customer列表
+message ListCustomersReq {
+  int32 page = 1;                     //当前页
+  int32 page_size = 2;                //每页数量
+  string search = 3;                  // 搜索
+  string sort_keys = 4;               //排序键
+  repeated string project_fields = 5; // 需要的字段
+  repeated string exclude_fields = 6; // 排除的字段
+}
+message ListCustomersResp {
+  int32 code = 1;                 //返回码
+  string msg = 2;                 //消息说明
+  repeated CustomerInfo data = 3; //数据
+  int32 count = 4;                //总数
+  int32 total_page = 5;           //总页数
+}
+
+service UsersService {
+  // UpsertCustomer
+  rpc UpsertCustomer(UpsertCustomerReq) returns (UpsertCustomerResp);
+
+  // 新增Customer
+  rpc AddCustomer(AddCustomerReq) returns (AddCustomerResp);
+
+  // 删除Customer
+  rpc DeleteCustomer(DeleteCustomerReq) returns (DeleteCustomerResp);
+
+  // 修改Customer
+  rpc ChangeCustomer(ChangeCustomerReq) returns (ChangeCustomerResp);
+
+  // 查询Customer
+  rpc GetCustomer(GetCustomerReq) returns (GetCustomerResp);
+
+  // Customer列表
+  rpc ListCustomers(ListCustomersReq) returns (ListCustomersResp);
+}
