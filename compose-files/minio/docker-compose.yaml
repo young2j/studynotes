@@ -1,0 +1,21 @@
+# docker run \
+#   -p 9000:9000 \
+#   -p 9001:9001 \
+#   -e "MINIO_ROOT_USER=AKIAIOSFODNN7EXAMPLE" \
+#   -e "MINIO_ROOT_PASSWORD=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY" \
+#   quay.io/minio/minio server /data --console-address ":9001"
+
+version: '3.5'
+services:
+  minio:
+    image: quay.io/minio/minio
+    container_name: minio
+    command: server /data --console-address ":9001"
+    ports:
+      - 9000:9000
+      - 9001:9001
+    environment:
+      - MINIO_ROOT_USER=minio
+      - MINIO_ROOT_PASSWORD=miniopwd
+    volumes:
+      - ../data/minio:/data

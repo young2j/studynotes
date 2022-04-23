@@ -1,0 +1,18 @@
+version: '3.5'
+services:
+  rabbitmq:
+    image: hub.qixincha.com/rabbitmq:management
+    container_name: rabbitmq-server
+    restart: always
+    network_mode: bridge
+    volumes:
+      - ./rabbitmq:/var/lib/rabbitmq
+      - ./rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf
+    ports:
+      - 5672:5672 # amqp
+      - 15672:15672 # http
+    # - 15692:15692 # http/prometheus
+    # - 25672:25672 # clustering
+    sysctls:
+      net.core.somaxconn: 16384
+
