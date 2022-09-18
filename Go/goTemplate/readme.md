@@ -40,12 +40,12 @@ type UsersStaff struct {
 	OnJob       int32          // 是否在职
 	EmployeeId  string         // 工号
 	Role        string         // 角色名,角色需要进行分配
-	CreatedTime time.Time      // 创建时间
-	UpdatedTime time.Time      // 更新时间
+	CreateTime time.Time      // 创建时间
+	UpdateTime time.Time      // 更新时间
 }
 ```
 
-## 第三步：补全模型tag
+## 第三步: 补全模型tag
 
 ```shell
 # cd templates/tools
@@ -66,13 +66,13 @@ type UsersStaff struct {
   OnJob int32 `json:"onJob" bson:"onJob" description:"是否在职"`
   EmployeeId string `json:"employeeId" bson:"employeeId" description:"工号"`
   Role string `json:"role" bson:"role" description:"角色名,角色需要进行分配"`
-  CreatedTime time.Time `json:"createdTime" bson:"createdTime" description:"创建时间"`
-  UpdatedTime time.Time `json:"updatedTime" bson:"updatedTime" description:"更新时间"`
+  CreateTime time.Time `json:"createTime" bson:"createTime" description:"创建时间"`
+  UpdateTime time.Time `json:"updateTime" bson:"updateTime" description:"更新时间"`
 
 }
 ```
 
-## 第四步：生成api文件
+## 第四步: 生成api文件
 
 ```shell
 go run . -t api -f ../../services/users/model/usersStaffModel.go [-s users]

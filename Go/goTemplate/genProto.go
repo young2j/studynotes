@@ -67,7 +67,8 @@ message Delete{{.Table}}Resp {
 message Change{{.Table}}Req {
   string id = 1;                // objectId
   bytes query = 2;              // 修改条件
-  {{.Table}}Info {{ToSnake .Table}} = 3; // 更新数据
+  {{.Table}}Info {{ToSnake .Table}} = 3; // 更新数据(全量)
+	bytes update = 4; // 更新数据(局部)
 }
 message Change{{.Table}}Resp {
 		int32 code = 1; //返回码
@@ -78,6 +79,7 @@ message Change{{.Table}}Resp {
 message Get{{.Table}}Req {
 	string id = 1; //objectId
 	bytes query = 2; // 查询条件
+	bool nocache= 3; // 是否缓存 
 }
 message Get{{.Table}}Resp {
 		int32 code = 1; //返回码
@@ -103,6 +105,16 @@ message List{{.Table}}sResp {
 	  int32 total_page = 5; //总页数
 }
 
+// {{.Table}}计数
+message Count{{.Table}}sReq {
+  bytes query = 1; // 查询条件
+}
+message Count{{.Table}}sResp {
+  int32 code = 1; //返回码
+  string msg = 2; //消息说明
+  int32 data = 3; //数量
+}
+
 service {{ToCamel .ServiceName}}Service {
   // Upsert{{.Table}}
   rpc Upsert{{.Table}}(Upsert{{.Table}}Req) returns (Upsert{{.Table}}Resp);
@@ -121,6 +133,9 @@ service {{ToCamel .ServiceName}}Service {
 
   // {{.Table}}列表
   rpc List{{.Table}}s(List{{.Table}}sReq) returns (List{{.Table}}sResp);
+
+	// {{.Table}}数量
+  rpc Count{{.Table}}s(Count{{.Table}}sReq) returns (Count{{.Table}}sResp);
 }
 `
 

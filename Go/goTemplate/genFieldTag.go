@@ -59,13 +59,13 @@ func genFieldTag(modelName string, astFields []*ast.Field) {
 		switch fieldtt := astField.Type.(type) {
 		case *ast.Ident:
 			field.Type = fieldtt.Name
-			field.Tag = fmt.Sprintf("`json:\"%s,omitempty\" bson:\"%s,omitempty\" description:\"%s\"`", lowerCamelFieldName, lowerCamelFieldName, description)
+			field.Tag = fmt.Sprintf("`json:\"%s\" bson:\"%s\" description:\"%s\"`", lowerCamelFieldName, lowerCamelFieldName, description)
 		case *ast.SelectorExpr:
 			field.Type = fieldtt.X.(*ast.Ident).Name + "." + fieldtt.Sel.Name
 			if lowerCamelFieldName == "id" {
 				field.Tag = fmt.Sprintf("`json:\"%s,omitempty\" bson:\"%s,omitempty\" description:\"%s\"`", lowerCamelFieldName, "_id", description)
 			} else {
-				field.Tag = fmt.Sprintf("`json:\"%s,omitempty\" bson:\"%s,omitempty\" description:\"%s\"`", lowerCamelFieldName, lowerCamelFieldName, description)
+				field.Tag = fmt.Sprintf("`json:\"%s\" bson:\"%s\" description:\"%s\"`", lowerCamelFieldName, lowerCamelFieldName, description)
 			}
 		case *ast.ArrayType:
 			elt := fieldtt.Elt
@@ -82,7 +82,7 @@ func genFieldTag(modelName string, astFields []*ast.Field) {
 				}
 			}
 			field.Type = "[]" + eltype
-			field.Tag = fmt.Sprintf("`json:\"%s,omitempty\" bson:\"%s,omitempty\" description:\"%s\"`", lowerCamelFieldName, lowerCamelFieldName, description)
+			field.Tag = fmt.Sprintf("`json:\"%s\" bson:\"%s\" description:\"%s\"`", lowerCamelFieldName, lowerCamelFieldName, description)
 		}
 		tplData.Fields = append(tplData.Fields, field)
 	}

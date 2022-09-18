@@ -88,6 +88,7 @@ const (
 		gocopy.CopyWithOption(&data, in.{{.TableName}}, &gocopy.Option{
 			IgnoreZero:   true,
 			Converters:   utils.CONVERTER_TO_COMPLEX,
+			NameFromTo:   map[string]string{"Id": "_id"},
 		})
 		update["$set"] = data
 	}
@@ -114,7 +115,7 @@ const (
 		if err != nil {
 			return nil, err
 		}
-		err = l.svcCtx.{{.ModelName}}Model.Update(l.ctx, q, update)
+		_, err = l.svcCtx.{{.ModelName}}Model.UpdateAll(l.ctx, q, update)
 		if err != nil {
 			return nil, err
 		}
@@ -153,7 +154,7 @@ const (
 		err       error
 	)
 	if in.Id != "" {
-		{{LowerCamel .TableName}}, err = l.svcCtx.{{ .ModelName }}Model.FindOneId(l.ctx, in.Id)
+		{{LowerCamel .TableName}}, err = l.svcCtx.{{ .ModelName }}Model.FindOneId(l.ctx, in.Id, in.Nocache)
 		if err != nil {
 			return nil, err
 		}
@@ -162,7 +163,7 @@ const (
 		if err := bson.Unmarshal(in.Query, &q); err != nil {
 			return nil, err
 		}
-		{{LowerCamel .TableName}}, err = l.svcCtx.{{ .ModelName }}Model.FindOne(l.ctx, q)
+		{{LowerCamel .TableName}}, err = l.svcCtx.{{ .ModelName }}Model.FindOne(l.ctx, q, in.Nocache)
 		if err != nil {
 			return nil, err
 		}
@@ -218,7 +219,26 @@ const (
 		Count:     count,
 		TotalPage: utils.GetTotalPage(count, in.PageSize),
 	}, nil
-`
+	`
+	countTpl = `
+	q := bson.M{}
+	err := bson.Unmarshal(in.Query, &q)
+	if err != nil {
+		return nil, err
+	}
+
+	count, err := l.svcCtx.{{ .ModelName }}Model.Count(l.ctx, q)
+	if err != nil {
+		return nil, err
+	}
+
+	return &{{ .PbPackage }}.{{ .ReturnsType }}{
+		Code: http.StatusOK,
+		Msg:  "查询成功",
+		Data: count,
+	}, nil
+	
+	`
 )
 
 type LogicTplData struct {
@@ -363,6 +383,25 @@ func genLogic(inputFile string) {
 			}
 
 			tpl, err := template.New(rpc.Name).Funcs(funcs).Parse(listTpl)
+			if err != nil {
+				log.Println(err)
+				continue
+			}
+			buf := getTplBuf(tpl, tplData)
+			writeLogic(protoPath, rpc.Name, action, buf)
+
+		} else if strings.HasPrefix(rpc.Name, "Count") {
+			action := "Count"
+			table := strings.TrimPrefix(rpc.Name, action)
+			table = strings.TrimSuffix(table, "s")
+			tplData := &LogicTplData{
+				PbPackage:   p.PbPackage,
+				ModelName:   parser.CamelCase(p.Package.Name) + table,
+				TableName:   table,
+				ReturnsType: rpc.ReturnsType,
+			}
+
+			tpl, err := template.New(rpc.Name).Parse(countTpl)
 			if err != nil {
 				log.Println(err)
 				continue

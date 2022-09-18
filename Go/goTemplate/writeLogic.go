@@ -95,7 +95,7 @@ func getImportSpec(action, protoFile string) []ast.Spec {
 			"\"github.com/globalsign/mgo/bson\"",
 			"\"scana/common/utils\"",
 			fmt.Sprintf("\"scana/services/%s/model\"", serviceName),
-			"\"github.com/young2j/gocopy\"",
+			"\"scana/common/gocopy\"",
 		}
 		for _, v := range imports {
 			imp := &ast.ImportSpec{
@@ -111,7 +111,7 @@ func getImportSpec(action, protoFile string) []ast.Spec {
 			"\"net/http\"",
 			"\"scana/common/utils\"",
 			fmt.Sprintf("\"scana/services/%s/model\"", serviceName),
-			"\"github.com/young2j/gocopy\"",
+			"\"scana/common/gocopy\"",
 		}
 		for _, v := range imports {
 			imp := &ast.ImportSpec{
@@ -127,7 +127,7 @@ func getImportSpec(action, protoFile string) []ast.Spec {
 			"\"net/http\"",
 			"\"scana/common/utils\"",
 			"\"github.com/globalsign/mgo/bson\"",
-			"\"github.com/young2j/gocopy\"",
+			"\"scana/common/gocopy\"",
 		}
 		for _, v := range imports {
 			imp := &ast.ImportSpec{
@@ -158,7 +158,7 @@ func getImportSpec(action, protoFile string) []ast.Spec {
 			"\"scana/common/utils\"",
 			fmt.Sprintf("\"scana/services/%s/model\"", serviceName),
 			"\"github.com/globalsign/mgo/bson\"",
-			"\"github.com/young2j/gocopy\"",
+			"\"scana/common/gocopy\"",
 		}
 		for _, v := range imports {
 			imp := &ast.ImportSpec{
@@ -174,7 +174,21 @@ func getImportSpec(action, protoFile string) []ast.Spec {
 			"\"net/http\"",
 			"\"scana/common/utils\"",
 			"\"github.com/globalsign/mgo/bson\"",
-			"\"github.com/young2j/gocopy\"",
+			"\"scana/common/gocopy\"",
+		}
+		for _, v := range imports {
+			imp := &ast.ImportSpec{
+				Path: &ast.BasicLit{
+					Kind:  token.STRING,
+					Value: v,
+				},
+			}
+			ret = append(ret, imp)
+		}
+	case "Count":
+		imports := []string{
+			"\"net/http\"",
+			"\"github.com/globalsign/mgo/bson\"",
 		}
 		for _, v := range imports {
 			imp := &ast.ImportSpec{
