@@ -1,0 +1,9 @@
+1     province    省份  青海省
+2     domain  域名或者ip  tianfengyinlou.cn
+3     subject_no  主体备案号   青ICP备11000289号
+4     addr    注册地址    青海省西宁市城中区南关街138号
+5     check_time  备案时间, 时间对象  2011-06-23 16:38:00
+6     update_time 更新时间, 毫秒级时间戳    1607414120745
+7     site_no 网站备案/许可证号   青ICP备11000289号-2
+8     site_url    站点/网站首页网址   www.tianfengyinlou.cn
+9     comp_name   主办单位名称(公司名称)    西宁天丰银楼金银珠宝有限公司
