@@ -1,0 +1,92 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nginx
+  labels:
+    app: nginx
+  #############################################################
+  ## 拓扑感知提示：提供了一种把流量限制在发起区域之内的机制。
+  #############################################################
+  ## 激活服务的拓扑感知提示功能
+  # annotations:
+  #   service.kubernetes.io/topology-aware-hints: auto
+  ## 这告诉 EndpointSlice 控制器在它认为安全的时候在 EndpointSlice 上设置拓扑提示。
+  ## EndpointSlice 控制器以区域中节点的可分配 CPU 核心数为比例，给每个区域分配一定数量的端点。
+  ## kube-proxy 依据 EndpointSlice 控制器设置的提示，过滤由它负责路由的端点。
+  #############################################################
+  ## 限制：
+  ## 当 externalTrafficPolicy 或 internalTrafficPolicy 设置值为 Local 时，拓扑感知提示功能不可用
+  ## 自动扩展机制之间不能很好的协同工作
+  ## ...
+  #############################################################
+spec:
+  # hostname: host
+  # subdomain: subdomain
+  # setHostnameAsFQDN: true  # 将 Pod 的全限定域名（FQDN）作为该 Pod 的主机名
+  # dnsPolicy: ClusterFirst # Default/ClusterFirst/ClusterFirstWithHostNet/None
+
+  ##############################################################
+  ###/etc/resolv.conf:
+  ## nameserver 1.2.3.4
+  ## search ns1.svc.cluster-domain.example my.dns.search.suffix
+  ## options ndots:2 edns0
+  ### 对应dnsConfig配置:
+  ##############################################################
+  # dnsConfig:
+  #   nameservers:
+  #     - 1.2.3.4
+  #   searches:
+  #     - ns1.svc.cluster-domain.example
+  #     - my.dns.search.suffix
+  #   options:
+  #     - name: ndots
+  #       value: "2"
+  #     - name: edns0
+  containers:
+    - name: nginx
+      image: nginx:stable
+      resources:
+        limits:
+          memory: "128Mi"
+          cpu: "500m"
+      ports:
+        - containerPort: 80
+          name: nginx-port
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-svc
+spec:
+  # 控制器不断扫描与选择算符匹配的 Pod，然后将所有更新发布到与service同名 的 Endpoint 对象中。
+  selector:
+    app: nginx # 不断选择具有app=nginx标签的一组pod在逻辑上构成服务
+  # sessionAffinity: ClientIP # 将来自特定客户端的连接传递到同一 Pod
+  # clusterIP: xxx # 可以固定使用某一个集群ip
+
+  #########################################
+  ## 同一个svc上外部与内部流量策略只能存在一个 ##
+  #########################################
+  ## 外部流量策略
+  # externalTrafficPolicy: Cluster # Cluster-会将外部流量路由到所有就绪的端点; Local-只路由到当前节点上就绪的端点
+  ## 内部流量策略
+  # internalTrafficPolicy: Cluster # Cluster-会将内部流量路由到所有就绪的端点; Local-只路由到当前节点上就绪的端点
+
+  type: NodePort # 端口默认值：30000-32767
+  ports:
+    - port: 80
+      name: nginx-svc-port # 端口port可以指定名称，使用名称的好处是具体端口号可以随意变更
+      protocol: TCP # 默认tcp
+      targetPort: nginx-port # 80
+      nodePort: 30080 # nodePort:80 -> svcPort:80 -> podPort:80
+
+---
+## 服务发现
+# 环境变量——kubelet 会为每个活跃的 Service 对应的pod添加一组环境变量。如{SVCNAME}_SERVICE_HOST 和 {SVCNAME}_SERVICE_PORT
+# DNS—— _<portName>._<protocol>.service.namespace
+## 服务类型
+# ClusterIP: 服务只能够在集群内部访问
+# NodePort: 通过节点上 IP 和静态端口暴露服务. NodeIP:NodePort -> PodIP:PodPort(ClusterIP)
+# LoadBalancer：使用云提供商的负载均衡器向外部暴露服务
+# ExternalName：通过返回 CNAME 和对应值，将服务映射到 externalName 字段的内容, 无需创建任何类型代理。

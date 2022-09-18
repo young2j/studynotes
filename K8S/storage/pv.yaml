@@ -1,0 +1,59 @@
+################################################
+####              静态制备持久卷              ####
+################################################
+# pv 是集群空间作用域的资源对象
+
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: mypv
+spec:
+  capacity: # 容量
+    storage: 5Gi
+  ################################################
+  ## Filesystem: 卷会被 Pod 挂载到某个目录
+  ## Block: 卷的存储来自某块设备，Kuberneretes 会在第一次挂载卷之前在空设备上创建文件系统
+  volumeMode: Filesystem
+  ################################################
+  ### 访问模式
+  ## ReadWriteOnce：卷可以被<一个节点>以读写方式挂载。允许同一节点上的多个 Pod 访问卷。
+  ## ReadOnlyMany：卷可以被<多个节点>以只读方式挂载。
+  ## ReadWriteMany: 卷可以被<多个节点>以读写方式挂载。
+  ## ReadWriteOncePod: 卷可以被<单个 Pod> 以读写方式挂载。(这只支持 CSI 卷以及需要 Kubernetes 1.22 以上版本。)
+  accessModes:
+    - ReadWriteOnce
+  ################################################
+  ### 持久卷申领策略——从持久卷申领中释放时如何处理该数据卷
+  ## Retained(保留）——pv会被保留，同时保留外部基础设施中关联的存储资产。pv上仍然存在前一申领人的数据，不能用于其他申领，需要手动回收
+  ## Recycled(回收）——会在卷上执行一些基本的擦除 (rm -rf /thevolume/*）操作，之后允许该卷用于新的 PVC 申领。(已被废弃, 取而代之的建议方案是使用动态制备)。
+  ## Deleted（删除）——pv会被删除，同时也会从外部基础设施中删除所关联的存储资产
+  persistentVolumeReclaimPolicy: Recycle
+  ################################################
+  ## 存储类名称：
+  storageClassName: slow
+  ################################################
+  ## 预留pv，只有指定的pvc才能绑定到此pv
+  claimRef:
+    name: mypv-pvc
+    namespace: default
+  ################################################
+
+  ################################################
+  ## 附加挂载选项：
+  mountOptions:
+    - hard
+    - nfsvers=4.1
+  ################################################
+
+  nfs:
+    path: /tmp
+    server: 172.17.0.2
+## PersistentVolume 删除保护 finalizer
+# 可以在 PersistentVolume 上添加终结器Finalizer, 以确保只有在删除对应的存储后才删除具有 Delete 回收策略的 PersistentVolume。
+# 新引入的 kubernetes.io/pv-controller 和 external-provisioner.volume.kubernetes.io/finalizer 终结器仅会被添加到动态制备的卷上。
+
+## 每个卷会处于以下阶段(Phase)之一：
+# Available(可用)-- 卷是一个空闲资源，尚未绑定到任何申领；
+# Bound(已绑定)-- 该卷已经绑定到某申领；
+# Released(已释放)-- 所绑定的申领已被删除，但是资源尚未被集群回收；
+# Failed(失败)-- 卷的自动回收操作失败。

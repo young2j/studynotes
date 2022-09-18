@@ -1,0 +1,43 @@
+apiVersion: networking.k8s.io/v1
+kind: IngressClass
+metadata:
+  annotations:
+    ingressclass.kubernetes.io/is-default-class: "true" # 标记为集群默认ingress类
+    meta.helm.sh/release-name: nginx-ingress-controller-1660469086
+    meta.helm.sh/release-namespace: default
+  creationTimestamp: "2022-08-14T09:24:50Z"
+  generation: 1
+  labels:
+    app.kubernetes.io/component: controller
+    app.kubernetes.io/instance: nginx-ingress-controller-1660469086
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: nginx-ingress-controller
+    helm.sh/chart: nginx-ingress-controller-9.2.27
+  name: nginx
+  resourceVersion: "335299"
+  uid: 0207eaf6-6d7b-4641-a4f5-91bd29981ebb
+spec:
+  controller: k8s.io/ingress-nginx
+  # parameters:
+  #########################################################
+  ## IngressClass 的参数默认是集群范围的——不指定scope或scope=Cluster
+  #########################################################
+  ## 此 IngressClass 的配置定义在一个名为 “external-config” 的
+  ## IngressParameter（API 组为 k8s.example.com）资源中，
+  ## 该资源位于 “external-configuration” 命名空间中。
+  #   scope: Namespace
+  #   apiGroup: k8s.example.com
+  #   kind: IngressParameter
+  #   namespace: external-configuration
+  #   name: external-config
+  #########################################################
+  ## 此 IngressClass 的配置定义在一个名为 “external-config-1” 的
+  ## ClusterIngressParameter（API 组为 k8s.example.net）资源中。
+  ## 这项定义告诉 Kubernetes 去寻找一个集群作用域的参数资源。
+  #   scope: Cluster
+  #   apiGroup: k8s.example.net
+  #   kind: ClusterIngressParameter
+  #   name: external-config-1
+  #########################################################
+##
+# kubectl get ingressclass -o yaml

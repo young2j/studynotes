@@ -1,0 +1,31 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: outer-mysql8-svc
+  namespace: default
+spec:
+  ports:
+    - port: 3308
+      targetPort: mysql8-port
+
+---
+apiVersion: v1
+kind: Endpoints
+metadata:
+  name: outer-mysql8-svc # 必须与svc.metadata.name保持一致
+  namespace: default
+subsets: # ep最大容量1000个，超出容量会添加注解 endpoints.kubernetes.io/over-capacity: truncated，表明被截断
+  - addresses:
+      - ip: 192.168.10.150
+    ports:
+      - name: mysql8-port
+        port: 3308
+        protocol: TCP
+
+---
+## 没有标签选择算符的服务
+# 需要手动添加Enpoint对象
+## 适用场景
+# - 使用外部的服务，如数据库集群
+# - 适用另一个名称空间或集群中的服务
+

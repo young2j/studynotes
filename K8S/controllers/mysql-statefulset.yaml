@@ -1,0 +1,83 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-svc
+spec:
+  selector:
+    app: mysql
+  ports:
+    - port: 8000
+      targetPort: 3306 # svc:8000->pod:3306 (containerPort)
+  clusterIP: None
+
+# 无头服务
+# 控制pod的网络域
+# 使得pod具有稳定的网络标识, 与该Pod调度到哪个节点上无关。
+
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mysql-sts
+spec:
+  selector:
+    matchLabels: # 定义sts如何查找要管理的pods
+      app: mysql
+  serviceName: mysql-svc # 所属服务
+  replicas: 2 # 会覆盖kubectl scale sts xxx --replicas=x，如果 HorizontalPodAutoscaler 正在管理 StatefulSet 的缩放,请不要设置此值
+  minReadySeconds: 10 # 最短就绪秒数，指定新创建的 Pod 应该准备好且其任何容器不崩溃的最小秒数，达到此秒数后才被视为可用
+  # 扩缩容管理策略--不影响更新
+  # podManagementPolicy: OrderedReady # 默认设置。 Parallel——让 StatefulSet 控制器并行的启动或终止所有的 Pod，无需等待。
+  # 更新策略
+  updateStrategy:
+    type: RollingUpdate # 默认滚动更新--在sts中逆序更新
+    # rollingUpdate: # 分区滚动更新
+    #   partition: 2 # 所有序号大于等于该分区序号的 Pod 都会被更新。 所有序号小于该分区序号的 Pod 都不会被更新，即使被删除也会依据之前的版本进行重建
+    #   maxUnavailable: 1 # 控制更新期间最大不可用的 Pod 数
+    # type: OnDelete # 控制器将不会自动更新Pod。 用户必须手动删除 Pod 以便让控制器创建新的 Pod
+  template:
+    metadata:
+      labels:
+        app: mysql
+    spec:
+      containers:
+        - name: mysql
+          image: docker.io/library/mysql:8.0
+          ports:
+            - containerPort: 3306
+              name: mysql-sts
+          env:
+            - name: MYSQL_ALLOW_EMPTY_PASSWORD
+              value: "true"
+          volumeMounts:
+            - name: mysql-vol
+              mountPath: /var/lib/mysql
+  volumeClaimTemplates: # 每个pod接收到一个PersistentVolumeClaim, 与相关的PersistentVolume进行关联
+    - metadata:
+        name: mysql-vol
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        # storageClassName: "mysql-storage-class"
+        resources:
+          requests:
+            storage: 1Gi
+  # persistentVolumeClaimRetentionPolicy:
+  #   whenDeleted: Retain/Delete # 指定sts被删除时pod的pvc是被保留(默认)还是删除
+  #   whenScaled: Delete/Retain # 指定sts缩小时被删除pod的pvc是被保留(默认)还是删除
+
+---
+# sts 具有唯一的标识:
+# 有序索引
+# 稳定的网络标识
+# ->pod主机名: mysql-sts-0,mysql-sts-1
+# ->pod DNS: mysql-sts-0.mysql-svc.default.svc.cluster.local, mysql-sts-1.mysql-svc.default.svc.cluster.local
+# ->sts DNS: mysql-svc.default.svc.cluster.local
+# 稳定的存储
+# -> 当 Pod 或者 StatefulSet 被删除时，与 PersistentVolumeClaims 相关联的 PersistentVolume 并不会被删除。
+# -> 当pod被重新调度时会再次挂载相关联的pv
+
+# 扩缩容:
+# pod总是顺序创建、逆序终止
+# 扩容时前面的所有pod必须是running和ready状态
+# 终止一个pod时，所有后继的pod必须完全关闭
+# StatefulSet 不应将 pod.Spec.TerminationGracePeriodSeconds 设置为 0。 这种做法是不安全的，要强烈阻止。

@@ -1,0 +1,40 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress-svc-backend
+  labels:
+    name: ingress-svc-backend
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    # kubernetes.io/ingress.class: nginx # v1.18已废弃，由ingressClassName替代
+spec:
+  ingressClassName: nginx
+  defaultBackend: # 当没有rules可匹配时，请求流量被路由到默认后端
+    service:
+      name: nginx-svc
+      port:
+        number: 80
+  ############################################
+  # tls:
+  # - hosts:
+  #     - https-example.foo.com
+  #   secretName: testsecret-tls
+  ############################################
+  rules:
+    # host: * # 可选，支持通配符表示如 *.foo.com
+    - http:
+        paths:
+          - pathType: Prefix
+            path: "/nginx" # 可以用逗号分隔匹配路径，表示多个路径匹配
+            backend:
+              service:
+                name: nginx-svc
+                port:
+                  number: 80
+## cli
+# kubectl get ingressclass
+
+## pathType:
+# ImplementationSpecific: 匹配方法取决于具体的 IngressClass。
+# Exact：精确匹配 URL 路径，且区分大小写。同路径条件下优先于Prefix匹配
+# Prefix：基于以 / 分隔的 URL 路径前缀匹配。匹配区分大小写。

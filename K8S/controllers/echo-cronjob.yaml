@@ -1,0 +1,22 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: echo-cronjob
+spec:
+  schedule: "* * * * *" # crontab: 分 时 某天 某月 周几
+  # timeZone: Etc/UTC  # 默认使用contronller-manager所在的时区
+  timeZone: Asia/Shanghai # 需要启用CronJobTimeZone门控
+  concurrencyPolicy: Allow # Forbid/Replace
+  # 控制器会统计过去20秒到现在错过了多少次 Job。如果错过的调度次数超过 100 次， 那么它就不会启动这个任务
+  # startingDeadlineSeconds: 20
+  jobTemplate: # job模版
+    spec:
+      template: # pod模版
+        spec:
+          containers:
+            - name: hello
+              image: busybox
+              imagePullPolicy: IfNotPresent
+              command:
+                ["sh", "-c", "date; echo Hello from the Kubernetes cluster"]
+          restartPolicy: OnFailure

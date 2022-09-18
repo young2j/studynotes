@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-topology-svc
+spec:
+  selector:
+    app: nginx # 不断选择具有app=nginx标签的一组pod在逻辑上构成服务
+
+  type: NodePort # 端口默认值：30000-32767
+  ports:
+    - port: 80
+      name: nginx-svc-port # 端口port可以指定名称，使用名称的好处是具体端口号可以随意变更
+      protocol: TCP # 默认tcp
+      targetPort: 80
+      nodePort: 30081 # nodePort:80 -> svcPort:80 -> podPort:80
+  topologyKeys:
+    - "kubernetes.io/hostname" # 路由到节点本地端点
+    - "topology.kubernetes.io/zone" # 路由到同一区域
+    - "topology.kubernetes.io/region" # 路由到同一地区
+    - "*" # 路由到集群范围任一可用端点
+
+# !v1.21开始废弃
+## 拓扑感知流量路由--
+# 服务拓扑和 externalTrafficPolicy=Local 是不兼容的。
+# 有效的拓扑键目前只有：kubernetes.io/hostname、topology.kubernetes.io/zone 和 topology.kubernetes.io/region
+# 通配符："*"，如果要用，则必须是拓扑键值的最后一个。
+

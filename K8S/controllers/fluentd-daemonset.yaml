@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: fluentd-ds
+  labels:
+    app: fluentd-ds
+spec:
+  selector:
+    matchLabels:
+      app: fluentd
+  template:
+    metadata:
+      labels:
+        app: fluentd
+    spec:
+      # 控制pod在指定的节点上运行
+      # nodeSelector:
+      # affinity:
+      #   nodeAffinity:
+      #     requiredDuringSchedulingIgnoredDuringExecution:
+      #       nodeSelectorTerms:
+      #         - matchFields:
+      #             - key: metadata.name
+      #               operator: In
+      #               values:
+      #               - target-host-name
+
+      tolerations: # 容忍度设置——为了让该守护进程集在控制平面节点上运行
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
+        - key: node-role.kubernetes.io/master
+          operator: Exists
+          effect: NoSchedule
+      containers:
+        - name: fluentd
+          image: fluentd:latest
+          resources:
+            limits:
+              memory: "200Mi"
+              cpu: "100m"
+          volumeMounts:
+            - mountPath: /var/log
+              name: varlog
+            - mountPath: /var/lib/docker/containers
+              name: containerslog
+              readOnly: true
+      terminationGracePeriodSeconds: 30
+      volumes:
+        - name: varlog
+          hostPath:
+            path: /var/log
+        - name: containerslog
+          hostPath:
+            path: /var/lib/docker/containers
+# 守护进程集
+# 确保每个节点上只运行一个pod，pod会跟随节点的加入(移除)而新增(删除)
+# 当需要 Pod 副本总是运行在全部或特定主机上时，应该使用daemonset

@@ -1,0 +1,11 @@
+apiVersion: kubelet.config.k8s.io/v1beta1
+kind: KubeletConfiguration
+evictionHard:
+  memory.available: "500Mi"
+  nodefs.available: "1Gi"
+  imagefs.available: "100Gi"
+# 对于所有资源，默认的 eviction-minimum-reclaim 为 0
+evictionMinimumReclaim:
+  memory.available: "0Mi"
+  nodefs.available: "500Mi"
+  imagefs.available: "2Gi"

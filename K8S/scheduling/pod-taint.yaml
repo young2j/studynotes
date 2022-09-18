@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nginx
+  labels:
+    env: test
+spec:
+  containers:
+    - name: nginx
+      image: nginx
+      imagePullPolicy: IfNotPresent
+  tolerations: # 容忍污点
+    # NoSchedule-不调度Pod，PreferNoSchedule-尽量不调度Pod，NoExecute—不调度且驱逐Pod
+    - key: "key1"
+      operator: "Equal"
+      value: "value1"
+      effect: "NoSchedule"
+    - key: "key1"
+      operator: "Equal"
+      value: "value1"
+      effect: "NoExecute"
+      tolerationSeconds: 3600 # 可以容忍key1=value1的污点，但是最多容忍3600秒，之后将被驱逐
+## 打上污点:
+# kubectl taint nodes node1 key1=value1:NoSchedule
+## 去除污点:
+# kubectl taint nodes node1 key1=value1:NoSchedule-

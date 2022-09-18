@@ -1,0 +1,52 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: myapp
+  labels:
+    name: myapp
+spec:
+  ##################################################
+  ###                拓扑分布约束                  ###
+  ##################################################
+  ## maxSkew: 描述Pod被均匀分布的程度。必须指定此字段且该数值必须大于零。
+  # 当 whenUnsatisfiable: DoNotSchedule，则 maxSkew 定义目标拓扑中匹配 Pod 的数量与 全局最小值（与拓扑域中标签选择算符匹配的最小 Pod 数量）之间的最大允许差值。
+  # 当 whenUnsatisfiable: ScheduleAnyway，则该调度器会更为偏向能够降低偏差值的拓扑域。
+
+  ## minDomains: 表示符合条件的域的最小数量。符合条件的域是其节点与节点选择器匹配的域。
+  # 指定的 minDomains 值必须大于 0。
+  # 当符合条件的、拓扑键匹配的域的数量小于 minDomains 时，拓扑分布将“全局最小值”（global minimum）设为 0， 然后进行 skew 计算。
+  # “全局最小值” 是一个符合条件的域中匹配 Pod 的最小数量， 如果符合条件的域的数量小于 minDomains，则全局最小值为零。
+  # 当符合条件的拓扑键匹配域的个数等于或大于 minDomains 时，该值对调度没有影响。
+  # 如果你未指定 minDomains，则约束行为类似于 minDomains 等于 1。
+
+  ## topologyKey: 节点标签的键。
+
+  ## whenUnsatisfiable: 指示如果 Pod 不满足分布约束时如何处理：
+  # DoNotSchedule（默认）告诉调度器不要调度。
+  # ScheduleAnyway 告诉调度器仍然继续调度，只是根据如何能将偏差最小化来对节点进行排序。
+
+  ## labelSelector: 用于查找匹配的 Pod。
+  # 匹配此标签的 Pod 将被统计，以确定相应拓扑域中 Pod 的数量。
+  topologySpreadConstraints:
+    ###############################################
+    # 匹配标签为foo:bar的pods 需要满足均匀分布
+    # 均匀分布将只应用于存在标签键值对为 zone: <any value> 的节点
+    # 如果调度器找不到一种方式来满足此约束， 则新来的 Pod 保持在 pending 状态。
+    - maxSkew: 1 # 每个域zone中的偏差数不超过1
+      topologyKey: zone
+      whenUnsatisfiable: DoNotSchedule
+      labelSelector:
+        matchLabels:
+          foo: bar
+    # 均匀分布同时还应用于存在标签键值对为 node: <any value> 的节点
+    - maxSkew: 1 # 每个节点node中的偏差数不超过1
+      topologyKey: node
+      whenUnsatisfiable: DoNotSchedule
+      labelSelector:
+        matchLabels:
+          foo: bar
+  ##################################################
+
+  containers:
+    - name: pause
+      image: k8s.gcr.io/pause:3.1

@@ -1,0 +1,42 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: pi-job
+spec:
+  # ttlSecondsAfterFinished: 100 # Job 在结束之后立即被自动删除的秒数
+  # 完成模式: Indexed——每个pod都会获得一个索引值，介于0到completion-1之间，这时只有每个索引对应的至少一个pod都成功时job才算成功
+  # 对同一索引值可能被启动的 Pod 不止一个，但这种情况很少发生。
+  completionMode: NonIndexed # 默认值。每个pod独立无关且同质。
+  completions: 1 # 非0——当成功的 Pod 个数达到此设置时，Job 被视为完成。
+  backoffLimit: 4 # job在失败前的充实次数
+  # activeDeadlineSeconds: 100 # job的活跃期限，优先级高于backoffLimit。当达到此秒数时，所有pod都会被终止，job为Failed
+  # suspend: true # 当挂起一个 Job 时，所有正在运行且状态不是 Completed 的 Pod 将被终止
+  template:
+    metadata:
+      labels:
+        app: pi
+    spec:
+      # activeDeadlineSeconds: 0 # pod层也有
+      containers:
+        - name: pi
+          image: perl
+          command: ["perl", "-Mbignum=bpi", "-wle", "print bpi(2000)"]
+      restartPolicy: Never # only Never or OnFailure
+
+# job
+# 创建一个或者多个pod，直到指定数量的pod成功终止
+
+## 非并行job
+# 可以不设置 spec.completions 和 spec.parallelism。默认值均为 1。
+# 当成功的 Pod 个数达到 .spec.completions 时，Job 被视为完成。
+# 当使用 .spec.completionMode="Indexed" 时，每个 Pod 都会获得一个不同的 索引值，介于 0 和 .spec.completions-1 之间。
+
+## 完成计数job
+# 应该设置 spec.completions的值。
+# .spec.parallelism可以不设置，默认值为1。
+
+## 工作队列job
+# 你不可以设置 .spec.completions，但要将.spec.parallelism 设置为一个非负整数。
+# 当 Job 中任何 Pod 成功终止，不再创建新 Pod。
+# 当某个Pod 成功完成，且所有 Pod 都已终止，即可宣告 Job 成功完成。
+# 当任何 Pod 成功退出，所有 Pod 都应启动退出过程。

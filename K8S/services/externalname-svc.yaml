@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-service
+  namespace: prod
+spec:
+  type: ExternalName
+  # 当查找主机 my-service.prod.svc.cluster.local 时，
+  # 集群DNS服务返回CNAME记录，其值为 my.database.example.com。
+  externalName: my.database.example.com

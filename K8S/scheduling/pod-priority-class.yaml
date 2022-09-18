@@ -1,0 +1,27 @@
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: high-priority-nonpreempting
+value: 1000000
+########################################################
+# preemptionPolicy
+# - 默认为 PreemptLowerPriority，这将允许该 PriorityClass 的 Pod 抢占较低优先级的 Pod（现有默认行为也是如此）。
+# - 如果 preemptionPolicy 设置为 Never，则该 PriorityClass 中的 Pod 将是非抢占式的。
+preemptionPolicy: Never
+########################################################
+globalDefault: false
+description: "This priority class will not cause other pods to be preempted."
+
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nginx
+  labels:
+    env: test
+spec:
+  containers:
+    - name: nginx
+      image: nginx
+      imagePullPolicy: IfNotPresent
+  priorityClassName: high-priority-nonpreempting

@@ -1,0 +1,87 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: with-node-affinity
+spec:
+  schedulerName: "default-scheduler"
+  #####################################################
+  # 优先级: nodeName > nodeSelector > affinity
+  nodeName: kube-node1
+  #####################################################
+  nodeSelector:
+    "kubernetes.io/os": linux
+  #####################################################
+  affinity:
+    #####################################################
+    ## 节点亲和性
+    nodeAffinity:
+      # 必须
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms: # ||
+          - matchExpressions: # &&
+              - key: topology.kubernetes.io/zone
+                operator: In
+                values:
+                  - antarctica-east1
+                  - antarctica-west1
+      # 偏好
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 1 # 1-100
+          preference:
+            matchExpressions:
+              - key: another-node-label-key
+                operator: In
+                values:
+                  - another-node-label-value
+        - weight: 50
+          preference:
+            matchExpressions:
+              - key: label-2
+                operator: In
+                values:
+                  - key-2
+    #####################################################
+    ## Pod 亲和性
+    # Pod 间亲和性和反亲和性都需要相当的计算量，因此会在大规模集群中显著降低调度速度。
+    # 我们不建议在包含数百个节点的集群中使用这类设置。
+    #####################################################
+    podAffinity:
+      # 调度器必须将 Pod 调度到具有 topology.kubernetes.io/zone=V 标签的节点上，
+      # 并且集群中至少有一个位于该可用区的节点上运行着带有 security=S1 标签的 Pod
+      requiredDuringSchedulingIgnoredDuringExecution:
+        - labelSelector:
+            matchExpressions:
+              - key: security
+                operator: In
+                values:
+                  - S1
+          topologyKey: topology.kubernetes.io/zone
+          # namespaces:
+          #   - ""
+
+    podAntiAffinity:
+      # 如果同一可用区中存在其他运行着带有 security=S2 标签的 Pod 节点，
+      # 并且节点具有标签 topology.kubernetes.io/zone=R，Pod 不能被调度到该节点上。
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          podAffinityTerm:
+            labelSelector:
+              matchExpressions:
+                - key: security
+                  operator: In
+                  values:
+                    - S2
+            topologyKey: topology.kubernetes.io/zone
+
+      requiredDuringSchedulingIgnoredDuringExecution:
+        - labelSelector:
+            matchExpressions:
+              - key: app
+                operator: In
+                values:
+                  - store
+          topologyKey: "kubernetes.io/hostname"
+  #####################################################
+  containers:
+    - name: with-node-affinity
+      image: k8s.gcr.io/pause:2.0

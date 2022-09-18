@@ -1,0 +1,35 @@
+################################################
+####              动态制备持久卷              ####
+################################################
+# pvc 是名称空间作用域的资源对象
+
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mypvc
+  namespace: default
+  labels:
+    app: mypvc
+spec:
+  storageClassName: rook-ceph-block # 属性值设置为 ""，则被视为要请求的是没有设置存储类的PV卷
+  volumeMode: Filesystem # 申领时与pv的卷模式相同
+  accessModes: # 申领时与pv的访问模式相同
+    - ReadWriteOnce
+  resources: # 申领资源
+    requests:
+      storage: 2Gi
+  selector: # 过滤卷集合。设置了非空 selector 的 PVC 对象无法让集群为其动态制备 PV 卷(目前是)
+    matchLabels:
+      release: "stable"
+    matchExpressions:
+      - { key: environment, operator: In, values: [dev] }
+  ###########################################################
+  ## 卷克隆
+  dataSource:
+    kind: PersistentVolumeClaim
+    name: pvc-1
+  ###########################################################
+## 持久卷申领———必须请求某个存储类
+# 持久卷申领会耗用 pv 资源
+# 当pv不存在时会动态制备持久卷
+# pvc与pv是一对一绑定的，且绑定关系是排他的

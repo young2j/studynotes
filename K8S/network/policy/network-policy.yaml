@@ -1,0 +1,44 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy # 控制pod与pod之间的网络通信
+metadata:
+  name: test-network-policy
+  namespace: default
+spec:
+  podSelector: # 对该策略所适用的一组 Pod 进行选择
+    matchLabels:
+      role: db
+  policyTypes:
+    - Ingress # 策略应用于所选 Pod 的入站流量
+    - Egress # 策略应用于所选 Pod 的出站流量
+
+  #####################################################
+  ## 针对"default" 名字空间下带有 "role=db" 标签的所有 Pod：
+  #  允许以下 Pod 连接到他们的 6379 TCP 端口
+  #####################################################
+  ingress: # 入口白名单策略
+    - from:
+        - ipBlock: # 选择特定的 IP CIDR 范围，这些应该是集群外部 IP。(因为 Pod IP 存在时间短暂的且随机产生)
+            cidr: 172.17.0.0/16
+            except:
+              - 172.17.1.0/24
+        - namespaceSelector: # 选择特定的名字空间
+            matchLabels:
+              project: myproject
+        - podSelector: # 选择特定的 Pod，可以和namespaceSelector同时选择(去掉-)
+            matchLabels:
+              role: frontend
+      ports:
+        - protocol: TCP
+          port: 6379
+  ####################################################
+  ## 针对"default" 名字空间下带有 "role=db" 标签的所有 Pod：
+  # 允许他们连接到 CIDR 10.0.0.0/24 下 5978到6978 TCP 端口
+  ####################################################
+  egress: # 出口白名单策略
+    - to:
+        - ipBlock:
+            cidr: 10.0.0.0/24
+      ports:
+        - protocol: TCP
+          port: 5978
+          endPort: 6978

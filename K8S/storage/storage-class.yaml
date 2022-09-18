@@ -1,0 +1,45 @@
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: gluster-vol-default
+  annotations:
+    storageclass.kubernetes.io/is-default-class: "true" # 通过注解设置为默认存储类
+provisioner: kubernetes.io/glusterfs # 制备器，必须提供
+reclaimPolicy: Delete # 回收策略，默认Delete。
+parameters:
+  resturl: "http://192.168.10.100:8080"
+  restuser: ""
+  secretNamespace: ""
+  secretName: ""
+allowVolumeExpansion: true # 允许pvc扩充
+
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: standard
+provisioner: kubernetes.io/aws-ebs
+parameters:
+  type: gp2
+reclaimPolicy: Retain
+allowVolumeExpansion: true
+mountOptions: # 挂载选项，取决于卷插件是否支持
+  - debug
+#####################################################
+## 卷的绑定模式:
+# Immediate: 一旦创建了pvc也就完成了卷绑定和动态制备
+# WaitForFirstConsumer: 延迟pv的绑定和制备，直到使用该pvc的 Pod 被创建
+volumeBindingMode: Immediate
+## 注意事项:
+# 如果你选择使用 WaitForFirstConsumer，请不要在 Pod 规约中使用 nodeName 来指定节点亲和性。
+# 如果在这种情况下使用 nodeName，Pod 将会绕过调度程序，PVC 将停留在 pending 状态。
+# 在这种情况下，你可以使用节点选择器spec.nodeSelector
+#####################################################
+## 允许的拓扑结构——将供应卷的拓扑限制在特定的区域
+allowedTopologies:
+- matchLabelExpressions:
+  - key: failure-domain.beta.kubernetes.io/zone
+    values:
+    - us-central-1a
+    - us-central-1b
+#####################################################

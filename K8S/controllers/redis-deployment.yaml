@@ -1,0 +1,71 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis-deployment
+  labels:
+    app: redis
+spec: # deployment规约
+  replicas: 1 # 如果一个 HorizontalPodAutoscaler 在管理 Deployment 的扩缩， 则不要设置 .replicas
+  selector: # 定义deployment如何查找要管理的pods
+    matchLabels: # 等价于如下matchExpressions
+      app: redis
+    # matchExpressions:
+    #   - key: app
+    #     operator: In
+    #     values:
+    #       - "redis"
+  template: # pod规约
+    metadata:
+      labels:
+        app: redis
+    spec: # 容器规约
+      containers:
+        - name: redis
+          image: hub.qixincha.com/redis:latest
+          resources:
+            limits:
+              memory: "128Mi"
+              cpu: "500m"
+          ports:
+            - containerPort: 6379
+# 等价
+# kubectl get deployments redis-deployment
+# kubectl get deployment/redis-deployment
+# kubectl get deployment.apps/redis-deployment
+# kubectl get deployment.v1.apps/redis-deployment
+
+# kubectl describe deployment redis-deployment
+# kubectl get rs
+# kubectl get pods --show-labels
+
+# 查看上线状态
+# kubectl rollout status deployment/redis-deployment
+# 查看回滚历史
+# kubectl rollout history deployment/redis-deployment
+# 暂停上线
+# kubectl rollout pause deployment/redis-deployment
+# 恢复上线
+# kubectl rollout resume deployment/redis-deployment
+# 注解change-cause
+# kubectl annotate deployment/redis-deployment kubernetes.io/change-cause="create redis deployment"
+# 查看revision详细历史信息
+# kubectl rollout history deployment/redis-deployment --revision=1
+# 版本回滚
+# kubectl rollout undo deployment/redis-deployment
+# kubectl rollout undo deployment/redis-deployment --to-revision=2
+
+# 更新容器镜像
+# deployment更新时，会确保最多25%pod数不可用，最多25%pod数超出期望数
+# kubectl set image deployment/redis-deployment nginx=redis:latest
+
+# 编辑deployment，可以编辑所有配置项
+# kubectl edit deployment/redis-deployment
+# 查看所有配置项
+# kubectl get deployment redis-deployment -o yaml
+
+# 缩放
+# kubectl scale deployment/redis-deployment --replicas=2
+# 自动缩放
+# kubectl autoscale deployment/redis-deployment --min=1 --max=3 --cpu-percent=10
+# HorizontalPodAutoscaler
+# kubectl get hpa 
