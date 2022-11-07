@@ -1,0 +1,17 @@
+version: '3.5'
+
+services:
+  starrocks:
+    image: swr.cn-north-4.myhuaweicloud.com/ywaq/starrocks:2.4.0
+    container_name: starrocks
+    restart: always
+    privileged: true
+    environment:
+      - TZ=Asia/Shanghai
+    network_mode: bridge
+    ports:
+      - 9030:9030
+      - 8030:8030
+      - 8040:8040
+    sysctls:
+      net.core.somaxconn: 16384
