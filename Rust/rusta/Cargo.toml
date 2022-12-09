@@ -1,9 +1,18 @@
 [package]
+description = "just study notes"
+edition = "2021"
+license = "MIT OR Apache-2.0"
 name = "rusta"
 version = "0.1.0"
-edition = "2021"
-
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 rand = "0.8.5"
+hello_macro_derive = {path = "./hello_macro_derive"}
+futures = "0.3.21"
+
+[profile.dev]
+opt-level = 0
+
+[profile.release]
+opt-level = 3

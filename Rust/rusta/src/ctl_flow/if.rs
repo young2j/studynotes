@@ -1,4 +1,5 @@
-fn main() {
+
+pub fn run() {
     let number = 3;
     if number > 5 {
         println!("number {number} is greater than 5");

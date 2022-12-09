@@ -1,4 +1,5 @@
-fn main() {
+
+pub fn run() {
     let mut number = 3;
     let mut counter = 2;
     // loop标签

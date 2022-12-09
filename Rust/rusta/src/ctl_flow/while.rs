@@ -1,4 +1,5 @@
-fn main() {
+
+pub fn run() {
     let arr = [1; 5];
     let mut i = 0;
     while i < 5 {
