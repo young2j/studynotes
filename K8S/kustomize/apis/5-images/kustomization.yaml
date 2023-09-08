@@ -1,0 +1,15 @@
+# 这两行可省略
+# apiVersion: kustomize.config.k8s.io/v1beta1
+# kind: Kustomization
+
+namespace: scana
+
+resources:
+  - deployment.yaml
+  - svc.yaml
+
+images:
+  - name: nginx
+    newName: hub.qixincha.com/nginx
+    newTag: 3.5.5
+    digest: sha256:24a0c4b4a4c0eb97

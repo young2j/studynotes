@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: deploy-access-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: deploy-access-api
+  template:
+    spec:
+      nodeSelector:
+        "mtype": "cpu"    
+      imagePullSecrets:
+        - name: default-secret
+      containers:
+        - name: scana-access-api
+          imagePullPolicy: Always
+          resources:
+            requests:
+              cpu: 200m
+              memory: 256Mi
+            limits:
+              cpu: 1000m
+              memory: 1024Mi
+
+---
+apiVersion: autoscaling/v2beta1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: hpa-access-api-c
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: deploy-access-api
+  minReplicas: 1
+  maxReplicas: 3
+
+---
+apiVersion: autoscaling/v2beta1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: hpa-access-api-m
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: deploy-access-api
+  minReplicas: 1
+  maxReplicas: 3

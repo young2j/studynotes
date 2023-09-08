@@ -1,0 +1,41 @@
+Name: access-api
+Host: 0.0.0.0
+Port: 8009
+Mode: pro
+Timeout: 120000
+MaxBytes: 104857600
+
+AccessRpc:
+  Etcd:
+    Hosts:
+      - svc-etcd-cluster:2379
+    Key: access.rpc
+  Timeout: 120000
+
+UsersRpc:
+  Etcd:
+    Hosts:
+      - svc-etcd-cluster:2379
+    Key: users.rpc
+  Timeout: 120000
+
+CacheRedis:
+  - Host: 10.28.0.79:8635
+    Pass: XrNVWIpjLSGv+m3VeSr6QA==
+    Type: node # cluster
+
+Auth:
+  AccessSecret: bW9uZ28gMTAuMjUyLjIuOToyNzAxNy9hZG1pbi
+  AccessExpire: 28800
+
+Log:
+  ServiceName: access-api
+  Mode: console
+  Encoding: json
+  Level: info
+
+# otlp
+Telemetry:
+  Name: access-api
+  Endpoint: otlp-agent.default:4317
+  Batcher: grpc

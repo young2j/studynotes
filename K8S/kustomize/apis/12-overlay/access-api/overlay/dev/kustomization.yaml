@@ -1,0 +1,12 @@
+# bases:
+resources:
+  - ../../base
+  - hpa.yaml
+
+# # nameSuffix: -dev
+
+configMapGenerator:
+  - name: cm-access-api
+    files:
+      - access-api.yaml
+    behavior: replace

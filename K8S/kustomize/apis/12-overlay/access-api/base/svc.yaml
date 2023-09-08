@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: svc-access-api
+  namespace: default
+  labels:
+    app: svc-access-api
+
+spec:
+  ports:
+    - port: 8009
+      targetPort: 8009
+  selector:
+    app: deploy-access-api

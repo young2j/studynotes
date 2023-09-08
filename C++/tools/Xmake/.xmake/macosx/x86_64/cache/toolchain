@@ -1,0 +1,52 @@
+{
+    tool_target_hello_static_macosx_x86_64_ld = {
+        program = "/Library/Developer/CommandLineTools/usr/bin/clang++",
+        toolname = "clangxx",
+        toolchain_info = {
+            arch = "x86_64",
+            plat = "macosx",
+            cachekey = "xcode_arch_x86_64_plat_macosx",
+            name = "xcode"
+        }
+    },
+    tool_target_foo_macosx_x86_64_ar = {
+        program = "/Library/Developer/CommandLineTools/usr/bin/ar",
+        toolname = "ar",
+        toolchain_info = {
+            arch = "x86_64",
+            plat = "macosx",
+            cachekey = "xcode_arch_x86_64_plat_macosx",
+            name = "xcode"
+        }
+    },
+    tool_target_hello_static_macosx_x86_64_cxx = {
+        program = "/Library/Developer/CommandLineTools/usr/bin/clang",
+        toolname = "clang",
+        toolchain_info = {
+            arch = "x86_64",
+            plat = "macosx",
+            cachekey = "xcode_arch_x86_64_plat_macosx",
+            name = "xcode"
+        }
+    },
+    tool_target_foo_macosx_x86_64_cxx = {
+        program = "/Library/Developer/CommandLineTools/usr/bin/clang",
+        toolname = "clang",
+        toolchain_info = {
+            arch = "x86_64",
+            plat = "macosx",
+            cachekey = "xcode_arch_x86_64_plat_macosx",
+            name = "xcode"
+        }
+    },
+    xcode_arch_x86_64_plat_macosx = {
+        xcode_sdkver = "10.15",
+        target_minver = "10.15",
+        arch = "x86_64",
+        xcode_sysroot = "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk",
+        xcode = "/Applications/Xcode.app",
+        plat = "macosx",
+        __global = true,
+        bindir = "/Library/Developer/CommandLineTools/usr/bin"
+    }
+}

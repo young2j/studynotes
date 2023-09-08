@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: deploy-access-api
+  namespace: default
+  labels:
+    app: deploy-access-api
+spec:
+  replicas: 1
+  revisionHistoryLimit: 5
+  selector:
+    matchLabels:
+      app: deploy-access-api
+  template:
+    metadata:
+      labels:
+        app: deploy-access-api
+    spec:
+      priorityClassName: scana-4th-prior
+      containers:
+        - name: scana-access-api
+          image: swr.cn-north-4.myhuaweicloud.com/scana/scana-access-api:dev
+          command: ["./access-api", "-f", "etc/access-api.yaml"]
+          ports:
+            - containerPort: 8009
+          readinessProbe:
+            tcpSocket:
+              port: 8009
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket:
+              port: 8009
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: 1000m
+              memory: 1024Mi
+          volumeMounts:
+            - name: timezone
+              mountPath: /etc/localtime
+            - name: app-config
+              mountPath: /app/etc
+      volumes:
+        - name: timezone
+          hostPath:
+            path: /usr/share/zoneinfo/Asia/Shanghai
+        - name: app-config
+          configMap:
+            name: cm-access-api
+            items:
+              - key: access-api.yaml
+                path: access-api.yaml

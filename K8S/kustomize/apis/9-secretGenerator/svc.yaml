@@ -1,0 +1,11 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: svc-nginx
+spec:
+  selector:
+    app: mynginx
+  ports:
+    - name: http-port
+      port: 80
+      targetPort: 80

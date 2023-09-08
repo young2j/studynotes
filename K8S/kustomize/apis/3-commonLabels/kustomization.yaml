@@ -1,0 +1,12 @@
+# 这两行可省略
+# apiVersion: kustomize.config.k8s.io/v1beta1
+# kind: Kustomization
+
+namespace: scana
+
+resources:
+  - deployment.yaml
+  - svc.yaml
+
+commonLabels:
+  tier: backend

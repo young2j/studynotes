@@ -1,0 +1,26 @@
+# 这两行可省略
+# apiVersion: kustomize.config.k8s.io/v1beta1
+# kind: Kustomization
+
+namespace: scana
+
+resources:
+  - deployment.yaml
+  - svc.yaml
+
+patches:
+  - target:
+      group: apps
+      version: v1
+      kind: Deployment
+      name: deploy-mynginx
+      
+    patch: |-
+      - op: add
+        path: /spec/revisionHistoryLimit
+        value: 5
+      - op: replace
+        path: /spec/replicas
+        value: 5
+      - op: remove
+        path: /spec/selector

@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: deploy-mynginx
+spec:
+  selector:
+    matchLabels:
+      app: mynginx
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: mynginx
+    spec:
+      containers:
+        - name: mynginx
+          image: nginx:latest
+          env:
+          - name: REPLICAS
+            value: $(DEPLOY_REPLICAS)

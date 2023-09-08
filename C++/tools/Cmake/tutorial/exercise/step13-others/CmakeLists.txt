@@ -1,0 +1,88 @@
+cmake_minimum_required(VERSION 3.24)
+project(others)
+
+# link_directories( "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/lib")
+# include_directories( "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/include")
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+
+# OUTPUT_VARIABLE 选项用于将命令行的输出结果存储在指定的变量中。命令行的标准输出会被赋值给该变量，并且可以在后续的 CMake 脚本中使用。
+# RESULT_VARIABLE 选项用于将命令行的执行结果存储在指定的变量中。命令的返回码会被赋值给该变量。通常，0
+# 表示命令成功执行，非零值表示命令执行失败。
+execute_process(
+  COMMAND git log -1 --format="%h"
+  OUTPUT_VARIABLE git_commit_hash
+  RESULT_VARIABLE RESULT
+  OUTPUT_STRIP_TRAILING_WHITESPACE)
+
+find_file(
+  HEADER_H
+  NAMES header.h
+  PATHS ${PROJECT_SOURCE_DIR} REQUIRED)
+
+execute_process(
+  COMMAND
+    sh -c
+    "cat ${HEADER_H} | grep \"define MODSECURITY_MAJOR\" | awk {'print $3'} | sed 's/\"//g'"
+  OUTPUT_VARIABLE msc_version_major
+  OUTPUT_STRIP_TRAILING_WHITESPACE)
+execute_process(
+  COMMAND
+    sh -c
+    "cat ${HEADER_H} | grep \"define MODSECURITY_MINOR\" | awk {'print $3'} | sed 's/\"//g'"
+  OUTPUT_VARIABLE msc_version_minor
+  OUTPUT_STRIP_TRAILING_WHITESPACE)
+
+math(EXPR msc_version_c_plus_a "${msc_version_major} + ${msc_version_minor}")
+set(msc_version "${msc_version_major}+${msc_version_minor}")
+
+message("${msc_version_c_plus_a}")
+message("${msc_version}")
+
+message("${CMAKE_HOST_SYSTEM_NAME}")
+message("${CMAKE_SYSTEM_NAME}")
+
+find_program(GXX g++)
+if(GXX)
+  message("${GXX}  ...found")
+else()
+  message("... not found")
+endif()
+
+find_package(yajl)
+message("yajl found: ${yajl_FOUND}")
+message(STATUS "YAJL_INCLUDE_DIRS: ${YAJL_INCLUDE_DIRS}")
+message(STATUS "YAJL_LIBRARIES: ${YAJL_LIBRARIES}")
+
+find_package(lmdb CONFIG)
+message("lmdb found: ${lmdb_FOUND}")
+
+find_package(CURL CONFIG)
+message("curl found: ${CURL_FOUND}")
+# message("curl cflags: ${CURL_CFLAGS}")
+# message("curl ldflags: ${CURL_LDFLAGS}")
+# message("curl ldadd: ${CURL_LDADD}")
+message("curl include: ${CURL_INCLUDE_DIRS}")
+message("curl libs: ${CURL_LIBRARIES}")
+
+find_package(LibXml2 CONFIG)
+message("libxml2 found: ${LibXml2_FOUND}")
+
+find_package(pcre)
+message("pcre found: ${pcre_FOUND}")
+
+find_package(pcre2 CONFIG)
+message("pcre2 found: ${pcre2_FOUND}")
+
+find_package(Lua CONFIG)
+message("lua found: ${LUA_FOUND}")
+
+
+add_executable(main main.cc)
+target_link_libraries(main yajl)
+
+set(GLOBAL_DEFS "")
+set(GLOBAL_DEFS "${GLOBAL_DEFS} -DNO_LOGS=1")
+set(GLOBAL_DEFS "${GLOBAL_DEFS} -DON_PM=1")
+# list(APPEND GLOBAL_DEFS "-DNO_LOGS=1")
+# list(APPEND GLOBAL_DEFS "-DON_PM=1")
+message("${GLOBAL_DEFS}")

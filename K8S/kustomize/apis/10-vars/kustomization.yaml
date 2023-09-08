@@ -1,0 +1,23 @@
+# 这两行可省略
+# apiVersion: kustomize.config.k8s.io/v1beta1
+# kind: Kustomization
+
+namespace: scana
+
+resources:
+  - deployment.yaml
+  - svc.yaml
+
+replicas:
+  - name: deploy-mynginx
+    count: 3
+
+vars:
+  - name: DEPLOY_REPLICAS
+    objref:
+      kind: Deployment
+      name: deploy-mynginx
+      apiVersion: apps/v1
+    # 字段默认引用 metadata.name，可以省略
+    fieldref:
+      fieldpath: spec.replicas

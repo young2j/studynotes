@@ -1,0 +1,7 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: deploy-mynginx
+spec:
+  replicas: 5
+  revisionHistoryLimit: 5

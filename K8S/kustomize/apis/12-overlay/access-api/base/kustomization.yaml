@@ -1,0 +1,29 @@
+namespace: default
+
+resources:
+  - deployment.yaml
+  - svc.yaml
+  - hpa.yaml
+
+commonLabels:
+  # -------私有标签------------
+  tier: backend
+  # -------共享标签------------
+  app.kubernetes.io/part-of: scana # 此级别的更高级别应用程序的名称
+  app.kubernetes.io/managed-by: kubectl # 用于管理应用程序的工具
+  app.kubernetes.io/component: api # 架构中的组件
+
+# commonAnnotations:
+#   apply-time: "2023-01-11 18:44:40"
+
+configMapGenerator:
+  - name: cm-access-api
+
+generatorOptions:
+  disableNameSuffixHash: true
+  labels:
+    app: cm-access-api
+
+images:
+  - name: swr.cn-north-4.myhuaweicloud.com/scana/scana-access-api
+    newTag: dev-20230222154156

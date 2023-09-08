@@ -1,0 +1,16 @@
+# bases:
+resources:
+  - ../../base
+
+namespace: scana
+
+# nameSuffix: -prod
+
+configMapGenerator:
+  - name: cm-access-api
+    files:
+      - access-api.yaml
+    behavior: replace
+
+patchesStrategicMerge:
+  - patch.yaml

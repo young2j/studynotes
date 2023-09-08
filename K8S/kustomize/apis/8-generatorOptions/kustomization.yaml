@@ -1,0 +1,35 @@
+# 这两行可省略
+# apiVersion: kustomize.config.k8s.io/v1beta1
+# kind: Kustomization
+
+namespace: scana
+
+resources:
+  - deployment.yaml
+  - svc.yaml
+
+generatorOptions:
+  disableNameSuffixHash: true
+  annotations:
+    usage: demo
+  labels:
+    tier: backend
+
+configMapGenerator:
+  # 从字面值生成
+  - name: cm-auth
+    literals:
+      - AccessSecret=bW9uZ28gMTAuMjUyLjIuOToyNzAxNy9hZG1pbi
+      - AccessExpire=28800
+
+  # 从env文件生成
+  - name: cm-env
+    envs:
+      - .env
+
+  # 从文件生成
+  - name: cm-access-api
+    behavior: create
+    files:
+      - access-api.yaml
+      - env=.env

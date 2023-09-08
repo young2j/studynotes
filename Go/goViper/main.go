@@ -89,14 +89,14 @@ func main() {
 		fmt.Printf("unable to decode into struct, %v\n", err)
 	}
 
-	// // 使用远程配置
-	// // etcd
-	// viper.AddRemoteProvider("etcd", "http://127.0.0.1:4001","/config/hugo.json")
-	// viper.SetConfigType("json") // because there is no file extension in a stream of bytes, supported extensions are "json", "toml", "yaml", "yml", "properties", "props", "prop", "env", "dotenv"
-	// viper.ReadRemoteConfig()
-	// // consul
-	// viper.AddRemoteProvider("consul", "localhost:8500", "MY_CONSUL_KEY")
-	// viper.SetConfigType("json") // Need to explicitly set this to json
-	// viper.ReadRemoteConfig()
+	// 使用远程配置
+	// etcd
+	viper.AddRemoteProvider("etcd", "http://127.0.0.1:4001","/config/hugo.json")
+	viper.SetConfigType("json") // because there is no file extension in a stream of bytes, supported extensions are "json", "toml", "yaml", "yml", "properties", "props", "prop", "env", "dotenv"
+	viper.ReadRemoteConfig()
+	// consul
+	viper.AddRemoteProvider("consul", "localhost:8500", "MY_CONSUL_KEY")
+	viper.SetConfigType("json") // Need to explicitly set this to json
+	viper.ReadRemoteConfig()
 
 }

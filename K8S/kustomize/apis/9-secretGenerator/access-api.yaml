@@ -1,0 +1,20 @@
+Name: access-api
+Host: 0.0.0.0
+Port: 8009
+Mode: dev
+Timeout: 120000
+MaxBytes: 104857600
+
+AccessRpc:
+  Etcd:
+    Hosts:
+      - svc-etcd-cluster:2379
+    Key: access.rpc
+  Timeout: 120000
+
+UsersRpc:
+  Etcd:
+    Hosts:
+      - svc-etcd-cluster:2379
+    Key: users.rpc
+  Timeout: 120000
